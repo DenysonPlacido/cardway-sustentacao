@@ -51,6 +51,34 @@ def index():
             else:
                 json_error = "Por favor, insira um JSON válido."
 
+        elif form_type == 'with':
+            active_tab = 'with'
+            nome_with = request.form.get('nome_with', '').strip() or 'dados'
+            colunas = [request.form.get(f'coluna{i}', '').strip() for i in range(1, 7)]
+            colunas = [c for c in colunas if c]
+
+            blocos = []
+            for i in range(1, 6):
+                linhas = request.form.get(f'bloco{i}', '').strip().splitlines()
+                linhas = [l.strip() for l in linhas if l.strip()]
+                if linhas:
+                    blocos.append(linhas)
+
+            selects = []
+            for bloco in blocos:
+                for linha in bloco:
+                    valores = [v.strip() for v in linha.split(',')]
+                    if len(valores) != len(colunas):
+                        continue
+                    selects.append(f"SELECT {', '.join(valores)} FROM dual")
+
+            if selects:
+                resultado = f"WITH {nome_with} ({', '.join(colunas)}) AS (\n    " + \
+                            " UNION ALL\n    ".join(selects[:-1]) + \
+                            f"\n    {selects[-1]}\n)\nSELECT *\nFROM {nome_with};"
+
+
+
     return render_template('index.html',
                            resultado=resultado,
                            coluna=coluna,

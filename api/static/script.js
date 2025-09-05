@@ -1,3 +1,4 @@
+// /workspaces/Concatenar/api/static/script.js
 function mostrarAba(id) {
     document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
     document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));

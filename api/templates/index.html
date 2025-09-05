@@ -2,125 +2,171 @@
 
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
-    <meta charset="UTF-8" />
-    <title>Ferramentas Implantação</title>
-    <link rel="icon" href="/api/static/ico.png" type="image/x-icon" />
-    <link rel="stylesheet" href="/api/static/style.css" />
+  <meta charset="UTF-8" />
+  <title>Ferramentas Implantação</title>
+  <link rel="icon" href="/api/static/ico.png" type="image/x-icon" />
+  <link rel="stylesheet" href="/api/static/style.css" />
 </head>
+
 <body>
-    <div class="wrapper">
-        <div class="container">
-            <img class="bg-img" src="/api/static/bg.png" alt="fundo" />
-            <h3 style="text-align:center;">Ferramentas para Implantação</h3>
+  <div class="wrapper">
+    <div class="container">
+      <img class="bg-img" src="/api/static/bg.png" alt="fundo" />
+      <h3 style="text-align:center;">Ferramentas para Implantação</h3>
 
-            <div class="tab-buttons">
-                <button class="tab-btn {% if active_tab == 'concat' %}active{% endif %}" onclick="mostrarAba('concat')">Concatenador</button>
-                <button class="tab-btn {% if active_tab == 'json' %}active{% endif %}" onclick="mostrarAba('json')">Identador JSON</button>
-            </div>
-
-            
-            <div class="tab-content {% if active_tab == 'concat' %}active{% endif %}" id="concat">
-                <form method="post">
-                    <input type="hidden" name="form_type" value="concat" />
-                    <label>Nome da Coluna:</label>
-                    <input type="text" name="coluna" value="{{ coluna }}" />
-                    <label>Cole aqui os valores (1 por linha):</label>
-                    <textarea name="valores">{{ valores }}</textarea>
-
-                    <div class="btn-group">
-                        <button type="submit" name="tipo" value="string" class="btn">String</button>
-                        <button type="submit" name="tipo" value="numero" class="btn">Número</button>
-                    </div>
-                </form>
-
-                {% if resultado %}
-                <label><strong>Resultado:</strong></label>
-                <div class="result-wrapper">
-                  <div class="result-box" id="resultado">{{ resultado }}</div>
-                  <button class="copy-btn" onclick="copiarResultado('resultado', this)">
-                    <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor">
-                      <path d="M12.668 10.667C12.668 9.95614 12.668 9.46258 12.6367 9.0791C12.6137 8.79732 12.5758 8.60761 12.5244 8.46387L12.4688 8.33399C12.3148 8.03193 12.0803 7.77885 11.793 7.60254L11.666 7.53125C11.508 7.45087 11.2963 7.39395 10.9209 7.36328C10.5374 7.33197 10.0439 7.33203 9.33301 7.33203H6.5C5.78896 7.33203 5.29563 7.33195 4.91211 7.36328C4.63016 7.38632 4.44065 7.42413 4.29688 7.47559L4.16699 7.53125C3.86488 7.68518 3.61186 7.9196 3.43555 8.20703L3.36524 8.33399C3.28478 8.49198 3.22795 8.70352 3.19727 9.0791C3.16595 9.46259 3.16504 9.95611 3.16504 10.667V13.5C3.16504 14.211 3.16593 14.7044 3.19727 15.0879C3.22797 15.4636 3.28473 15.675 3.36524 15.833L3.43555 15.959C3.61186 16.2466 3.86474 16.4807 4.16699 16.6348L4.29688 16.6914C4.44063 16.7428 4.63025 16.7797 4.91211 16.8027C5.29563 16.8341 5.78896 16.835 6.5 16.835H9.33301C10.0439 16.835 10.5374 16.8341 10.9209 16.8027C11.2965 16.772 11.508 16.7152 11.666 16.6348L11.793 16.5645C12.0804 16.3881 12.3148 16.1351 12.4688 15.833L12.5244 15.7031C12.5759 15.5594 12.6137 15.3698 12.6367 15.0879C12.6681 14.7044 12.668 14.211 12.668 13.5V10.667Z"></path>
-                    </svg>
-                    <span class="btn-text">Copiar</span>
-                  </button>
-
-                </div>
+      <div class="tab-buttons">
+        <button class="tab-btn {% if active_tab == 'concat' %}active{% endif %}"
+          onclick="mostrarAba('concat')">Concatenador</button>
+        <button class="tab-btn {% if active_tab == 'json' %}active{% endif %}" onclick="mostrarAba('json')">Identador
+          JSON</button>
+        <button class="tab-btn {% if active_tab == 'with' %}active{% endif %}" onclick="mostrarAba('with')">
+          Gerador de Cláusula WITH
+        </button>
+      </div>
 
 
-                {% endif %}
-            </div>
+      <div class="tab-content {% if active_tab == 'concat' %}active{% endif %}" id="concat">
+        <form method="post">
+          <input type="hidden" name="form_type" value="concat" />
+          <label>Nome da Coluna:</label>
+          <input type="text" name="coluna" value="{{ coluna }}" />
+          <label>Cole aqui os valores (1 por linha):</label>
+          <textarea name="valores">{{ valores }}</textarea>
 
-                             
-                <div class="tab-content {% if active_tab == 'json' %}active{% endif %}" id="json">
-                    <label>Cole ou edite seu JSON abaixo:</label>
-                    <div id="jsoneditor" style="width: 100%; height: 300px; border: 1px solid #ccc; background: white;"></div>
+          <div class="btn-group">
+            <button type="submit" name="tipo" value="string" class="btn">String</button>
+            <button type="submit" name="tipo" value="numero" class="btn">Número</button>
+          </div>
+        </form>
 
-                    <div class="btn-group" style="margin-top: 10px;">
-                        <button type="button" class="btn" onclick="identarJSON()">Identar</button>
-                        <button type="button" class="btn" onclick="copiarJSON()">Copiar</button>
-                    </div>
+        {% if resultado %}
+        <label><strong>Resultado:</strong></label>
+        <div class="result-wrapper">
+          <div class="result-box" id="resultado">{{ resultado }}</div>
+          <button class="copy-btn" onclick="copiarResultado('resultado', this)">
+            <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor">
+              <path
+                d="M12.668 10.667C12.668 9.95614 12.668 9.46258 12.6367 9.0791C12.6137 8.79732 12.5758 8.60761 12.5244 8.46387L12.4688 8.33399C12.3148 8.03193 12.0803 7.77885 11.793 7.60254L11.666 7.53125C11.508 7.45087 11.2963 7.39395 10.9209 7.36328C10.5374 7.33197 10.0439 7.33203 9.33301 7.33203H6.5C5.78896 7.33203 5.29563 7.33195 4.91211 7.36328C4.63016 7.38632 4.44065 7.42413 4.29688 7.47559L4.16699 7.53125C3.86488 7.68518 3.61186 7.9196 3.43555 8.20703L3.36524 8.33399C3.28478 8.49198 3.22795 8.70352 3.19727 9.0791C3.16595 9.46259 3.16504 9.95611 3.16504 10.667V13.5C3.16504 14.211 3.16593 14.7044 3.19727 15.0879C3.22797 15.4636 3.28473 15.675 3.36524 15.833L3.43555 15.959C3.61186 16.2466 3.86474 16.4807 4.16699 16.6348L4.29688 16.6914C4.44063 16.7428 4.63025 16.7797 4.91211 16.8027C5.29563 16.8341 5.78896 16.835 6.5 16.835H9.33301C10.0439 16.835 10.5374 16.8341 10.9209 16.8027C11.2965 16.772 11.508 16.7152 11.666 16.6348L11.793 16.5645C12.0804 16.3881 12.3148 16.1351 12.4688 15.833L12.5244 15.7031C12.5759 15.5594 12.6137 15.3698 12.6367 15.0879C12.6681 14.7044 12.668 14.211 12.668 13.5V10.667Z">
+              </path>
+            </svg>
+            <span class="btn-text">Copiar</span>
+          </button>
 
-                    <div id="json-error" style="color: #f55; font-weight: bold; margin-top: 10px;"></div>
-                </div>
-
-            </div>
         </div>
 
-        <footer>
-            Desenvolvido por Denyson Deserto Plácido 
-        </footer>
+
+        {% endif %}
+      </div>
+
+
+      <div class="tab-content {% if active_tab == 'json' %}active{% endif %}" id="json">
+        <label>Cole ou edite seu JSON abaixo:</label>
+        <div id="jsoneditor" style="width: 100%; height: 300px; border: 1px solid #ccc; background: white;"></div>
+
+        <div class="btn-group" style="margin-top: 10px;">
+          <button type="button" class="btn" onclick="identarJSON()">Identar</button>
+          <button type="button" class="btn" onclick="copiarJSON()">Copiar</button>
+        </div>
+
+        <div id="json-error" style="color: #f55; font-weight: bold; margin-top: 10px;"></div>
+      </div>
+
+
+      <div class="tab-content {% if active_tab == 'with' %}active{% endif %}" id="with">
+        <form method="post">
+          <input type="hidden" name="form_type" value="with" />
+
+          <label>Nome do WITH (opcional):</label>
+          <input type="text" name="nome_with" placeholder="Ex: dados" />
+
+          <label>Nome das colunas (até 6):</label>
+          {% for i in range(1, 7) %}
+          <input type="text" name="coluna{{ i }}" placeholder="Coluna {{ i }}" />
+          {% endfor %}
+
+          <label>Blocos de valores (até 5):</label>
+          {% for i in range(1, 6) %}
+          <textarea name="bloco{{ i }}"
+            placeholder="Bloco {{ i }} - valores separados por vírgula, uma linha por registro"></textarea>
+          {% endfor %}
+
+          <div class="btn-group">
+            <button type="submit" class="btn">Gerar WITH</button>
+          </div>
+        </form>
+
+        {% if resultado %}
+        <label><strong>Resultado:</strong></label>
+        <div class="result-wrapper">
+          <div class="result-box" id="resultado">{{ resultado }}</div>
+          <button class="copy-btn" onclick="copiarResultado('resultado', this)">
+            <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor">
+              <path d="..."></path>
+            </svg>
+            <span class="btn-text">Copiar</span>
+          </button>
+        </div>
+        {% endif %}
+      </div>
+
     </div>
-    <link href="https://cdn.jsdelivr.net/npm/jsoneditor@latest/dist/jsoneditor.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/jsoneditor@latest/dist/jsoneditor.min.js"></script>
+  </div>
 
-    <script src="/api/static/script.js"></script>
-    
+  <footer>
+    Desenvolvido por Denyson Deserto Plácido
+  </footer>
+  </div>
+  <link href="https://cdn.jsdelivr.net/npm/jsoneditor@latest/dist/jsoneditor.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/jsoneditor@latest/dist/jsoneditor.min.js"></script>
+
+  <script src="/api/static/script.js"></script>
 
 
-<script>
-  let editor = null;
 
-  window.onload = function () {
-    // Inicializa editor JSON
-    const container = document.getElementById("jsoneditor");
-    if (container) {
-      editor = new JSONEditor(container, {
-        mode: 'code',
-        onError: function (err) {
-          document.getElementById("json-error").textContent = "Erro: " + err.message;
-        }
-      });
+  <script>
+    let editor = null;
+
+    window.onload = function () {
+      // Inicializa editor JSON
+      const container = document.getElementById("jsoneditor");
+      if (container) {
+        editor = new JSONEditor(container, {
+          mode: 'code',
+          onError: function (err) {
+            document.getElementById("json-error").textContent = "Erro: " + err.message;
+          }
+        });
+      }
+    };
+
+    function identarJSON() {
+      try {
+        const json = editor.get(); // se for inválido, lança erro
+        const formatado = JSON.stringify(json, null, 2);
+        editor.set(JSON.parse(formatado)); // limpa e aplica formatação padrão
+        document.getElementById("json-error").textContent = "JSON válido!";
+      } catch (e) {
+        document.getElementById("json-error").textContent = "JSON inválido: " + e.message;
+      }
     }
-  };
 
-  function identarJSON() {
-    try {
-      const json = editor.get(); // se for inválido, lança erro
-      const formatado = JSON.stringify(json, null, 2);
-      editor.set(JSON.parse(formatado)); // limpa e aplica formatação padrão
-      document.getElementById("json-error").textContent = "JSON válido!";
-    } catch (e) {
-      document.getElementById("json-error").textContent = "JSON inválido: " + e.message;
+    function copiarJSON() {
+      try {
+        const texto = JSON.stringify(editor.get(), null, 2);
+        navigator.clipboard.writeText(texto);
+        alert("JSON copiado com sucesso!");
+      } catch (e) {
+        alert("Erro ao copiar: " + e.message);
+      }
     }
-  }
-
-  function copiarJSON() {
-    try {
-      const texto = JSON.stringify(editor.get(), null, 2);
-      navigator.clipboard.writeText(texto);
-      alert("JSON copiado com sucesso!");
-    } catch (e) {
-      alert("Erro ao copiar: " + e.message);
-    }
-  }
-</script>
+  </script>
 
 
 
 
 
 </body>
+
 </html>
-
-
