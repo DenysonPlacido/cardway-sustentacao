@@ -3,55 +3,82 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Sustentacao - Cardway</title>
+  <title>Portal Sustentação</title>
   <link rel="icon" href="/api/static/ico.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/css/login.css" />
 </head>
 <body>
-  <img class="bg" src="/api/static/bg.png" alt="" aria-hidden="true" />
+  <div class="page-shell">
+    <div class="ambient ambient-one"></div>
+    <div class="ambient ambient-two"></div>
 
-  <main class="login-wrapper">
-    <div class="login-card">
-      <div class="login-header">
-        <img src="/api/static/ico.png" alt="Cardway" class="logo" />
-        <h1>Sustentacao</h1>
-        <p>Portal interno do time</p>
-      </div>
+    <main class="login-wrapper">
+      <section class="login-card" aria-label="Portal de acesso">
+        <aside class="brand-panel">
+          <div class="brand-top">
+            <img src="/api/static/ico.png" alt="Cardway" class="brand-logo" />
+            <div class="brand-kicker">Cardway</div>
+          </div>
 
-      <form class="login-form" id="loginForm" novalidate>
-        <div class="field">
-          <label for="login">Login</label>
-          <input
-            type="text"
-            id="login"
-            name="login"
-            placeholder="denyson.dplacido"
-            required
-            autocomplete="username"
-            spellcheck="false"
-            autocapitalize="none"
-          />
-        </div>
+          <div class="brand-copy">
+            <p class="eyebrow">Portal interno</p>
+            <h1>Sustentação</h1>
+            <p class="brand-description">
+              Acesse as ferramentas, automações e rotinas do time em um só lugar.
+            </p>
+          </div>
 
-        <div class="field">
-          <label for="password">Senha</label>
-          <input
-            type="password"
-            id="password"
-            name="password"
-            placeholder="********"
-            required
-            autocomplete="current-password"
-          />
-        </div>
+          <ul class="brand-list" aria-label="Recursos">
+            <li>Login seguro com sessão protegida</li>
+            <li>Ferramentas do time em um único painel</li>
+            <li>Base pronta para automações do dia a dia</li>
+          </ul>
+        </aside>
 
-        <div class="error-msg" id="errorMsg" hidden></div>
+        <section class="form-panel">
+          <div class="form-header">
+            <h2>Acessar conta</h2>
+            <p>Entre com seu login e senha para continuar.</p>
+          </div>
 
-        <button type="submit" class="btn-login" id="submitBtn">Entrar</button>
-      </form>
-    </div>
-  </main>
+          <form class="login-form" id="loginForm" novalidate>
+            <div class="field">
+              <label for="login">Login</label>
+              <input
+                type="text"
+                id="login"
+                name="login"
+                placeholder="denyson.dplacido"
+                required
+                autocomplete="username"
+                spellcheck="false"
+                autocapitalize="none"
+              />
+            </div>
 
+            <div class="field">
+              <label for="password">Senha</label>
+              <input
+                type="password"
+                id="password"
+                name="password"
+                placeholder="••••••••"
+                required
+                autocomplete="current-password"
+              />
+            </div>
+
+            <div class="error-msg" id="errorMsg" hidden></div>
+
+            <button type="submit" class="btn-login" id="submitBtn">Entrar</button>
+          </form>
+        </section>
+      </section>
+    </main>
+  </div>
   <script src="/js/login.js"></script>
 </body>
 </html>
