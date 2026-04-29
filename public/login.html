@@ -276,7 +276,7 @@
         <span class="card">card</span><span class="way">way</span>
       </div>
 
-      <h1 class="title">Portal do Sustentação</h1>
+      <h1 class="title">Portal de Sustentação</h1>
       <p class="subtitle">Bem-vindo! Acesse sua conta para continuar.</p>
 
       <form id="loginForm" novalidate>
@@ -341,6 +341,24 @@
       errorMsg.style.display = 'none'
     }
 
+    function getFriendlyLoginError(status, payload) {
+      const raw = String(payload?.error || '').trim().toLowerCase()
+
+      if (status === 401 || raw.includes('credencial')) {
+        return 'Login ou senha inválidos.'
+      }
+
+      if (status === 503 || raw.includes('indispon') || raw.includes('banco') || raw.includes('database')) {
+        return 'A autenticação está indisponível agora. Tente novamente em alguns minutos.'
+      }
+
+      if (status === 400) {
+        return payload?.error || 'Verifique os dados informados.'
+      }
+
+      return payload?.error || 'Não foi possível entrar agora. Tente novamente.'
+    }
+
     togglePassword.addEventListener('click', () => {
       const showing = passwordInput.type === 'text'
       passwordInput.type = showing ? 'password' : 'text'
@@ -367,13 +385,13 @@
         const data = await response.json().catch(() => ({}))
 
         if (!response.ok) {
-          showError(data.error || 'Credenciais inválidas')
+          showError(getFriendlyLoginError(response.status, data))
           return
         }
 
         window.location.href = '/home'
       } catch (error) {
-        showError('Erro de conexão. Tente novamente.')
+        showError('Não consegui alcançar o servidor. Verifique sua conexão e tente novamente.')
       } finally {
         submitBtn.disabled = false
         submitBtn.textContent = 'Entrar'

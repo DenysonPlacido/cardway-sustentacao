@@ -34,9 +34,9 @@ form.addEventListener('submit', async (event: SubmitEvent) => {
       return
     }
 
-    showError(data.error ?? 'Credenciais invalidas')
+    showError(getFriendlyLoginError(response.status, data))
   } catch {
-    showError('Erro de conexao. Tente novamente.')
+    showError('Não consegui alcançar o servidor. Verifique sua conexão e tente novamente.')
   } finally {
     submitBtn.disabled = false
     submitBtn.textContent = 'Entrar'
@@ -46,4 +46,22 @@ form.addEventListener('submit', async (event: SubmitEvent) => {
 function showError(message: string): void {
   errorMsg.textContent = message
   errorMsg.hidden = false
+}
+
+function getFriendlyLoginError(status: number, payload: LoginResponse): string {
+  const raw = String(payload.error ?? '').trim().toLowerCase()
+
+  if (status === 401 || raw.includes('credencial')) {
+    return 'Login ou senha inválidos.'
+  }
+
+  if (status === 503 || raw.includes('indispon') || raw.includes('banco') || raw.includes('database')) {
+    return 'A autenticação está indisponível agora. Tente novamente em alguns minutos.'
+  }
+
+  if (status === 400) {
+    return payload.error ?? 'Verifique os dados informados.'
+  }
+
+  return payload.error ?? 'Não foi possível entrar agora. Tente novamente.'
 }
