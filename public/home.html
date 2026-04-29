@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sustentação – Cardway</title>
+  <link rel="icon" href="/api/static/ico.png" />
+  <link rel="stylesheet" href="/css/home.css" />
+</head>
+<body>
+
+  <!-- ─── Sidebar ─── -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <img src="/api/static/ico.png" alt="Cardway" class="brand-logo" />
+      <div class="brand-text">
+        <span class="brand-name">Sustentação</span>
+        <span class="brand-sub">Cardway</span>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a class="nav-item active" data-section="painel" href="#">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+          <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
+        </svg>
+        <span>Painel</span>
+      </a>
+
+      <div class="nav-section-label">Ferramentas</div>
+
+      <a class="nav-item" data-section="sql-concat" href="#">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M4 6h16M4 10h16M4 14h10M4 18h6"/>
+        </svg>
+        <span>SQL → IN</span>
+      </a>
+
+      <a class="nav-item" data-section="json-format" href="#">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>
+        </svg>
+        <span>JSON Identador</span>
+      </a>
+
+      <a class="nav-item" data-section="sql-with" href="#">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <ellipse cx="12" cy="5" rx="9" ry="3"/>
+          <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/>
+          <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
+        </svg>
+        <span>SQL WITH</span>
+      </a>
+
+      <div class="nav-section-label">Em breve</div>
+
+      <a class="nav-item disabled" href="#">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+        </svg>
+        <span>Automações</span>
+        <span class="badge-soon">Em breve</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="user-row">
+        <div class="user-avatar" id="userAvatar">?</div>
+        <div class="user-details">
+          <span class="user-name" id="userName">Carregando...</span>
+          <span class="user-email" id="userEmail"></span>
+        </div>
+      </div>
+      <button class="btn-logout" id="logoutBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+          <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/>
+          <polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+        </svg>
+        Sair
+      </button>
+    </div>
+  </aside>
+
+  <!-- ─── Main ─── -->
+  <div class="main-layout">
+    <header class="main-header">
+      <h1 class="page-title" id="pageTitle">Painel</h1>
+    </header>
+
+    <main class="main-content">
+
+      <!-- Painel -->
+      <section id="section-painel" class="section">
+        <div class="dashboard-grid">
+          <div class="card tool-card" data-section="sql-concat">
+            <div class="tool-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M4 6h16M4 10h16M4 14h10M4 18h6"/>
+              </svg>
+            </div>
+            <h3>SQL → IN</h3>
+            <p>Converte lista de valores em cláusula SQL IN() com suporte a +1000 itens</p>
+          </div>
+
+          <div class="card tool-card" data-section="json-format">
+            <div class="tool-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>
+              </svg>
+            </div>
+            <h3>JSON Identador</h3>
+            <p>Formata e valida JSON com indentação clara</p>
+          </div>
+
+          <div class="card tool-card" data-section="sql-with">
+            <div class="tool-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <ellipse cx="12" cy="5" rx="9" ry="3"/>
+                <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/>
+                <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
+              </svg>
+            </div>
+            <h3>SQL WITH</h3>
+            <p>Gera cláusula WITH a partir de colunas e blocos de dados</p>
+          </div>
+
+          <div class="card tool-card coming-soon">
+            <div class="tool-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+              </svg>
+            </div>
+            <h3>Automações</h3>
+            <p>Automações para o dia a dia do time de sustentação</p>
+            <span class="badge-soon">Em breve</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- SQL → IN -->
+      <section id="section-sql-concat" class="section hidden">
+        <div class="tool-wrapper">
+          <div class="tool-header">
+            <h2>SQL → IN</h2>
+            <p>Converte lista de valores em cláusula SQL IN() — separa em blocos de 1000 automaticamente</p>
+          </div>
+          <div class="form-group">
+            <label for="sqlColumn">Nome da coluna</label>
+            <input type="text" id="sqlColumn" placeholder="Ex: id_cliente" />
+          </div>
+          <div class="form-group">
+            <label for="sqlValues">Valores (1 por linha)</label>
+            <textarea id="sqlValues" rows="8" placeholder="123&#10;456&#10;789"></textarea>
+          </div>
+          <div class="btn-row">
+            <button class="btn btn-primary" id="sqlBtnString">String</button>
+            <button class="btn btn-primary" id="sqlBtnNumber">Número</button>
+            <button class="btn btn-ghost" id="sqlClearBtn">Limpar</button>
+          </div>
+          <div id="sqlResult" class="result-block hidden">
+            <div class="result-header">
+              <span class="result-meta" id="sqlResultCount"></span>
+              <button class="btn-copy" id="sqlCopyBtn">Copiar</button>
+            </div>
+            <pre class="result-pre" id="sqlResultPre"></pre>
+          </div>
+        </div>
+      </section>
+
+      <!-- JSON Identador -->
+      <section id="section-json-format" class="section hidden">
+        <div class="tool-wrapper">
+          <div class="tool-header">
+            <h2>JSON Identador</h2>
+            <p>Cole seu JSON para formatar e validar</p>
+          </div>
+          <div class="form-group">
+            <label for="jsonInput">JSON de entrada</label>
+            <textarea id="jsonInput" rows="10" placeholder='{"chave": "valor"}'></textarea>
+          </div>
+          <div class="btn-row">
+            <button class="btn btn-primary" id="jsonFormatBtn">Identar</button>
+            <button class="btn btn-ghost" id="jsonClearBtn">Limpar</button>
+          </div>
+          <div id="jsonError" class="error-inline hidden"></div>
+          <div id="jsonResult" class="result-block hidden">
+            <div class="result-header">
+              <span class="result-meta">JSON formatado</span>
+              <button class="btn-copy" id="jsonCopyBtn">Copiar</button>
+            </div>
+            <pre class="result-pre" id="jsonResultPre"></pre>
+          </div>
+        </div>
+      </section>
+
+      <!-- SQL WITH -->
+      <section id="section-sql-with" class="section hidden">
+        <div class="tool-wrapper">
+          <div class="tool-header">
+            <h2>Gerador SQL WITH</h2>
+            <p>Gera cláusula WITH a partir de colunas e blocos de dados</p>
+          </div>
+          <div class="form-group">
+            <label for="withName">Nome do WITH</label>
+            <input type="text" id="withName" placeholder="Ex: dados" />
+          </div>
+          <div class="form-group">
+            <label>Colunas (até 6)</label>
+            <div class="cols-grid" id="withCols">
+              <input type="text" placeholder="Coluna 1" />
+              <input type="text" placeholder="Coluna 2" />
+              <input type="text" placeholder="Coluna 3" />
+              <input type="text" placeholder="Coluna 4" />
+              <input type="text" placeholder="Coluna 5" />
+              <input type="text" placeholder="Coluna 6" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Blocos de dados (valores separados por vírgula, 1 linha = 1 registro)</label>
+            <div class="blocks-list" id="withBlocks">
+              <textarea rows="4" placeholder="Bloco 1&#10;val1col1, val1col2&#10;val2col1, val2col2"></textarea>
+              <textarea rows="4" placeholder="Bloco 2 (opcional)"></textarea>
+              <textarea rows="4" placeholder="Bloco 3 (opcional)"></textarea>
+            </div>
+          </div>
+          <div class="btn-row">
+            <button class="btn btn-primary" id="withGenerateBtn">Gerar WITH</button>
+            <button class="btn btn-ghost" id="withClearBtn">Limpar</button>
+          </div>
+          <div id="withResult" class="result-block hidden">
+            <div class="result-header">
+              <span class="result-meta">Cláusula WITH</span>
+              <button class="btn-copy" id="withCopyBtn">Copiar</button>
+            </div>
+            <pre class="result-pre" id="withResultPre"></pre>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <script src="/js/home.js"></script>
+</body>
+</html>
