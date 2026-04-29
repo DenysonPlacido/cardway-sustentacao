@@ -9,10 +9,11 @@ const loginInput = document.getElementById('login') as HTMLInputElement
 const passwordInput = document.getElementById('password') as HTMLInputElement
 const errorMsg = document.getElementById('errorMsg') as HTMLDivElement
 const submitBtn = document.getElementById('submitBtn') as HTMLButtonElement
+const togglePassword = document.getElementById('togglePassword') as HTMLButtonElement
 
 form.addEventListener('submit', async (event: SubmitEvent) => {
   event.preventDefault()
-  errorMsg.hidden = true
+  hideError()
   submitBtn.disabled = true
   submitBtn.textContent = 'Entrando...'
 
@@ -27,7 +28,7 @@ form.addEventListener('submit', async (event: SubmitEvent) => {
       }),
     })
 
-    const data = (await response.json()) as LoginResponse
+    const data = (await response.json().catch(() => ({}))) as LoginResponse
 
     if (response.ok && data.success) {
       window.location.href = '/home'
@@ -43,9 +44,20 @@ form.addEventListener('submit', async (event: SubmitEvent) => {
   }
 })
 
+togglePassword.addEventListener('click', () => {
+  const showing = passwordInput.type === 'text'
+  passwordInput.type = showing ? 'password' : 'text'
+  togglePassword.setAttribute('aria-label', showing ? 'Mostrar senha' : 'Ocultar senha')
+})
+
 function showError(message: string): void {
   errorMsg.textContent = message
   errorMsg.hidden = false
+}
+
+function hideError(): void {
+  errorMsg.textContent = ''
+  errorMsg.hidden = true
 }
 
 function getFriendlyLoginError(status: number, payload: LoginResponse): string {

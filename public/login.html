@@ -1,88 +1,55 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Portal Cardway</title>
+  <meta name="description" content="Acesso ao portal de sustentação da Cardway." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="icon" href="cardway-logo-DmLFa68k.svg" type="image/svg+xml" />
-  <link rel="shortcut icon" href="cardway-logo-DmLFa68k.svg" type="image/svg+xml" />
+  <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="icon" href="/favicon.ico" type="image/svg+xml" />
+  <link rel="shortcut icon" href="/favicon.ico" type="image/svg+xml" />
   <style>
-    *, *::before, *::after { box-sizing: border-box; }
-
     :root {
-      --bg: #111111;
-      --bg-2: #171717;
-      --panel: #0b0f16;
-      --panel-line: rgba(53, 72, 102, 0.42);
-      --field: #0f1520;
-      --field-line: #273244;
-      --text: #e8edf5;
-      --muted: #95a2b6;
+      color-scheme: dark;
+      --bg-1: #06070a;
+      --bg-2: #0d1117;
+      --panel: rgba(12, 16, 24, 0.96);
+      --panel-border: rgba(71, 89, 118, 0.45);
+      --field: #101826;
+      --field-border: #273244;
+      --text: #e9eef7;
+      --muted: #92a0b6;
       --accent: #ff6a00;
-      --accent-2: #ff7f1f;
-      --shadow: 0 22px 70px rgba(0, 0, 0, 0.55);
-      --font: 'Nunito Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --accent-2: #ff8a2a;
+      --shadow: 0 24px 72px rgba(0, 0, 0, 0.58);
     }
 
-    html, body { height: 100%; }
+    * { box-sizing: border-box; }
+
+    html, body { min-height: 100%; }
 
     body {
       margin: 0;
-      font-family: var(--font);
+      font-family: 'Nunito Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       color: var(--text);
       background:
-        linear-gradient(180deg, rgba(0, 0, 0, 0.18), rgba(0, 0, 0, 0.18)),
-        linear-gradient(135deg, #0c0c0c 0%, #131313 40%, #0d0f13 100%);
-      overflow: hidden;
+        radial-gradient(circle at top, rgba(255, 106, 0, 0.14), transparent 34%),
+        linear-gradient(180deg, rgba(6, 7, 10, 0.95), rgba(6, 7, 10, 0.98)),
+        linear-gradient(135deg, var(--bg-1), var(--bg-2));
     }
 
-    .bg-grid {
+    .grid {
       position: fixed;
       inset: 0;
-      overflow: hidden;
       pointer-events: none;
-    }
-
-    .hex {
-      position: absolute;
-      width: 280px;
-      height: 320px;
-      background: linear-gradient(180deg, rgba(35, 47, 63, 0.58), rgba(18, 26, 38, 0.38));
-      clip-path: polygon(25% 6%, 75% 6%, 100% 50%, 75% 94%, 25% 94%, 0 50%);
-      opacity: 0.8;
-      filter: blur(0.2px);
-    }
-
-    .hex::after {
-      content: '';
-      position: absolute;
-      inset: 22% 0 0 0;
-      background: rgba(26, 42, 68, 0.55);
-      clip-path: inherit;
-      transform: scale(0.92) translateY(6px);
-    }
-
-    .h1 { top: -18px; left: -20px; }
-    .h2 { top: 128px; left: 26px; transform: scale(0.94) rotate(0.2deg); }
-    .h3 { top: 324px; left: 150px; transform: scale(0.76); opacity: 0.55; }
-    .h4 { top: 36px; right: 300px; transform: scale(0.95); }
-    .h5 { top: 208px; right: 90px; transform: scale(0.78); opacity: 0.58; }
-    .h6 { bottom: -24px; left: -28px; transform: scale(0.96); }
-    .h7 { bottom: -24px; right: 170px; transform: scale(0.94); }
-
-    .noise {
-      position: fixed;
-      inset: 0;
       background-image:
-        linear-gradient(rgba(255,255,255,0.018) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,0.018) 1px, transparent 1px);
-      background-size: 48px 48px;
-      opacity: 0.14;
-      mix-blend-mode: soft-light;
-      pointer-events: none;
+        linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+      background-size: 52px 52px;
+      opacity: 0.45;
+      mask-image: radial-gradient(circle at center, black 30%, transparent 78%);
     }
 
     .shell {
@@ -91,79 +58,76 @@
       min-height: 100vh;
       display: grid;
       place-items: center;
-      padding: 32px 20px;
+      padding: 32px 18px;
     }
 
     .card {
-      width: min(410px, 100%);
-      background: linear-gradient(180deg, rgba(8, 12, 19, 0.98), rgba(10, 14, 22, 0.98));
-      border: 1px solid var(--panel-line);
-      border-radius: 22px;
+      width: min(420px, 100%);
+      padding: 34px 36px 30px;
+      border: 1px solid var(--panel-border);
+      border-radius: 24px;
+      background: var(--panel);
       box-shadow: var(--shadow);
-      padding: 34px 38px 28px;
-      text-align: center;
-      backdrop-filter: blur(8px);
+      backdrop-filter: blur(10px);
     }
 
     .brand {
-      display: inline-flex;
-      align-items: baseline;
-      gap: 0;
-      margin-bottom: 28px;
-      line-height: 1;
-      user-select: none;
+      display: flex;
+      justify-content: center;
+      margin-bottom: 26px;
     }
 
     .brand-logo {
-      width: 180px;
+      width: 178px;
       max-width: 100%;
       display: block;
     }
 
     .title {
-      margin: 0 0 10px;
-      font-size: 1.42rem;
-      line-height: 1.15;
-      color: #ffffff;
+      margin: 0 0 8px;
+      font-size: 1.45rem;
+      line-height: 1.1;
       font-weight: 800;
+      text-align: center;
     }
 
     .subtitle {
       margin: 0 0 24px;
-      color: #89a0c0;
-      font-size: 0.96rem;
+      color: var(--muted);
+      text-align: center;
       line-height: 1.45;
+      font-size: 0.96rem;
     }
 
     .field {
+      margin-bottom: 14px;
+    }
+
+    .input-wrap {
       position: relative;
-      margin-bottom: 16px;
     }
 
-    .field input {
+    .input-wrap input {
       width: 100%;
-      height: 38px;
-      border-radius: 10px;
-      border: 1px solid var(--field-line);
-      background: linear-gradient(180deg, #0b1018, #101826);
-      color: #cdd7e6;
+      height: 44px;
+      border: 1px solid var(--field-border);
+      border-radius: 12px;
+      background: linear-gradient(180deg, #0b1018, var(--field));
+      color: var(--text);
       padding: 0 14px;
-      font-family: inherit;
-      font-size: 1rem;
+      font: inherit;
       outline: none;
-      transition: border-color 0.18s ease, box-shadow 0.18s ease;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
     }
 
-    .field input::placeholder {
-      color: #7b8aa3;
+    .input-wrap input::placeholder { color: #76849b; }
+
+    .input-wrap input:focus {
+      border-color: rgba(255, 122, 28, 0.72);
+      box-shadow: 0 0 0 4px rgba(255, 122, 28, 0.12);
     }
 
-    .field input:focus {
-      border-color: rgba(255, 122, 28, 0.68);
-      box-shadow: 0 0 0 4px rgba(255, 122, 28, 0.1);
-    }
-
-    .password-wrap {
+    .password-row {
       position: relative;
     }
 
@@ -172,68 +136,70 @@
       top: 50%;
       right: 1px;
       transform: translateY(-50%);
-      width: 40px;
-      height: 36px;
+      width: 42px;
+      height: 42px;
       border: 0;
-      border-left: 1px solid rgba(67, 83, 110, 0.7);
-      border-radius: 0 10px 10px 0;
-      background: rgba(20, 27, 39, 0.9);
-      color: #ffffff;
+      border-left: 1px solid rgba(71, 89, 118, 0.75);
+      border-radius: 0 12px 12px 0;
+      background: rgba(17, 24, 38, 0.96);
+      color: #fff;
       display: grid;
       place-items: center;
       cursor: pointer;
     }
 
-    .toggle-password:hover { background: rgba(28, 36, 52, 0.95); }
+    .toggle-password:hover { background: rgba(24, 32, 48, 0.98); }
 
     .forgot {
-      display: block;
-      margin: -4px 0 18px;
-      text-align: right;
+      display: inline-flex;
+      margin: 4px 0 16px;
       color: var(--accent);
-      font-size: 0.84rem;
+      font-size: 0.88rem;
       text-decoration: none;
     }
 
     .forgot:hover { text-decoration: underline; }
 
     .error {
-      display: none;
-      margin: 0 0 14px;
-      padding: 10px 12px;
-      border-radius: 10px;
-      border: 1px solid rgba(255, 86, 86, 0.22);
-      background: rgba(255, 86, 86, 0.08);
-      color: #ffb2b2;
+      min-height: 46px;
+      margin-bottom: 14px;
+      padding: 11px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 107, 107, 0.28);
+      background: rgba(255, 107, 107, 0.09);
+      color: #ffb6b6;
+      line-height: 1.35;
       font-size: 0.92rem;
-      text-align: left;
     }
 
     .btn {
       width: 100%;
-      height: 34px;
+      height: 44px;
       border: 0;
-      border-radius: 10px;
+      border-radius: 12px;
       background: linear-gradient(180deg, var(--accent-2), var(--accent));
-      color: #ffffff;
+      color: #fff;
       font: inherit;
-      font-size: 1rem;
-      font-weight: 700;
+      font-weight: 800;
       cursor: pointer;
-      box-shadow: 0 10px 20px rgba(255, 106, 0, 0.22);
+      box-shadow: 0 12px 26px rgba(255, 106, 0, 0.22);
       transition: transform 0.14s ease, box-shadow 0.14s ease, opacity 0.14s ease;
     }
 
     .btn:hover:not(:disabled) {
       transform: translateY(-1px);
-      box-shadow: 0 12px 22px rgba(255, 106, 0, 0.3);
+      box-shadow: 0 14px 30px rgba(255, 106, 0, 0.30);
     }
 
-    .btn:disabled { opacity: 0.7; cursor: wait; }
+    .btn:disabled {
+      cursor: wait;
+      opacity: 0.72;
+    }
 
     .footer {
-      margin-top: 18px;
-      color: #b0bdd1;
+      margin-top: 16px;
+      text-align: center;
+      color: #b2bed0;
       font-size: 0.92rem;
     }
 
@@ -244,69 +210,58 @@
     }
 
     .footer a:hover { text-decoration: underline; }
-
-    @media (max-width: 520px) {
-      .card { padding: 28px 20px 22px; border-radius: 20px; }
-      .brand .card { font-size: 2rem; }
-      .brand .way { font-size: 1.88rem; }
-    }
   </style>
 </head>
 <body>
-  <div class="bg-grid" aria-hidden="true">
-    <div class="hex h1"></div>
-    <div class="hex h2"></div>
-    <div class="hex h3"></div>
-    <div class="hex h4"></div>
-    <div class="hex h5"></div>
-    <div class="hex h6"></div>
-    <div class="hex h7"></div>
-  </div>
-  <div class="noise" aria-hidden="true"></div>
+  <div class="grid" aria-hidden="true"></div>
 
   <main class="shell">
     <section class="card" aria-label="Login Cardway">
       <div class="brand" aria-label="Cardway">
-        <img class="brand-logo" src="cardway-logo-DmLFa68k.svg" alt="Cardway" />
+        <img class="brand-logo" src="/cardway-logo-DmLFa68k.svg" alt="Cardway" />
       </div>
 
       <h1 class="title">Portal de Sustentação</h1>
-      <p class="subtitle">Bem-vindo! Acesse sua conta para continuar.</p>
+      <p class="subtitle">Bem-vindo. Entre com suas credenciais para continuar.</p>
 
       <form id="loginForm" novalidate>
         <div class="field">
-          <input
-            id="login"
-            name="login"
-            type="text"
-            placeholder="E-mail Corporativo *"
-            autocomplete="username"
-            spellcheck="false"
-            autocapitalize="none"
-            required
-          />
+          <div class="input-wrap">
+            <input
+              id="login"
+              name="login"
+              type="text"
+              placeholder="E-mail corporativo *"
+              autocomplete="username"
+              spellcheck="false"
+              autocapitalize="none"
+              required
+            />
+          </div>
         </div>
 
-        <div class="field password-wrap">
-          <input
-            id="password"
-            name="password"
-            type="password"
-            placeholder="Senha *"
-            autocomplete="current-password"
-            required
-          />
-          <button type="button" class="toggle-password" id="togglePassword" aria-label="Mostrar senha">
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M1.5 12s4-7.5 10.5-7.5S22.5 12 22.5 12s-4 7.5-10.5 7.5S1.5 12 1.5 12Z" />
-              <circle cx="12" cy="12" r="3.2" />
-            </svg>
-          </button>
+        <div class="field password-row">
+          <div class="input-wrap">
+            <input
+              id="password"
+              name="password"
+              type="password"
+              placeholder="Senha *"
+              autocomplete="current-password"
+              required
+            />
+            <button type="button" class="toggle-password" id="togglePassword" aria-label="Mostrar senha">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M1.5 12s4-7.5 10.5-7.5S22.5 12 22.5 12s-4 7.5-10.5 7.5S1.5 12 1.5 12Z" />
+                <circle cx="12" cy="12" r="3.2" />
+              </svg>
+            </button>
+          </div>
         </div>
 
         <a class="forgot" href="#">Esqueci minha senha</a>
 
-        <div class="error" id="errorMsg"></div>
+        <div class="error" id="errorMsg" hidden></div>
 
         <button class="btn" id="submitBtn" type="submit">Entrar</button>
       </form>
@@ -317,79 +272,6 @@
     </section>
   </main>
 
-  <script>
-    const form = document.getElementById('loginForm')
-    const loginInput = document.getElementById('login')
-    const passwordInput = document.getElementById('password')
-    const errorMsg = document.getElementById('errorMsg')
-    const submitBtn = document.getElementById('submitBtn')
-    const togglePassword = document.getElementById('togglePassword')
-
-    function showError(message) {
-      errorMsg.textContent = message
-      errorMsg.style.display = 'block'
-    }
-
-    function hideError() {
-      errorMsg.textContent = ''
-      errorMsg.style.display = 'none'
-    }
-
-    function getFriendlyLoginError(status, payload) {
-      const raw = String(payload?.error || '').trim().toLowerCase()
-
-      if (status === 401 || raw.includes('credencial')) {
-        return 'Login ou senha inválidos.'
-      }
-
-      if (status === 503 || raw.includes('indispon') || raw.includes('banco') || raw.includes('database')) {
-        return 'A autenticação está indisponível agora. Tente novamente em alguns minutos.'
-      }
-
-      if (status === 400) {
-        return payload?.error || 'Verifique os dados informados.'
-      }
-
-      return payload?.error || 'Não foi possível entrar agora. Tente novamente.'
-    }
-
-    togglePassword.addEventListener('click', () => {
-      const showing = passwordInput.type === 'text'
-      passwordInput.type = showing ? 'password' : 'text'
-      togglePassword.setAttribute('aria-label', showing ? 'Mostrar senha' : 'Ocultar senha')
-    })
-
-    form.addEventListener('submit', async (event) => {
-      event.preventDefault()
-      hideError()
-      submitBtn.disabled = true
-      submitBtn.textContent = 'Entrando...'
-
-      try {
-        const response = await fetch('/api/auth/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify({
-            login: loginInput.value.trim(),
-            password: passwordInput.value,
-          }),
-        })
-
-        const data = await response.json().catch(() => ({}))
-
-        if (!response.ok) {
-          showError(getFriendlyLoginError(response.status, data))
-          return
-        }
-
-        window.location.href = '/home'
-      } catch (error) {
-        showError('Não consegui alcançar o servidor. Verifique sua conexão e tente novamente.')
-      } finally {
-        submitBtn.disabled = false
-        submitBtn.textContent = 'Entrar'
-      }
-    })
-  </script></body>
+  <script src="/js/login.js" defer></script>
+</body>
 </html>

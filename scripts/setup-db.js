@@ -1,7 +1,23 @@
+require('dotenv').config()
+
 const { Pool } = require('pg')
 const bcrypt = require('bcryptjs')
-async function main() {
-  const pool = new Pool({
+
+const DEFAULT_USERS = [
+  { login: 'denyson.dplacido', name: 'Denyson D. Placido', password: 'Cardway@123' },
+  { login: 'pedro.ggabe', name: 'Pedro G. Gabe', password: 'Cardway@456' },
+]
+
+function createPool() {
+  const connectionString = process.env.DATABASE_URL?.trim()
+  if (connectionString) {
+    return new Pool({
+      connectionString,
+      ssl: { rejectUnauthorized: false },
+    })
+  }
+
+  return new Pool({
     host: process.env.PGHOST,
     database: process.env.PGDATABASE,
     user: process.env.PGUSER,
@@ -9,6 +25,10 @@ async function main() {
     ssl: { rejectUnauthorized: false },
     port: Number(process.env.PGPORT || 5432),
   })
+}
+
+async function main() {
+  const pool = createPool()
 
   try {
     await pool.query(`
@@ -26,26 +46,21 @@ async function main() {
     await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS login TEXT`)
     await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_active BOOLEAN NOT NULL DEFAULT TRUE`)
     await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()`)
-    const legacyEmailColumn = await pool.query(
-      `
-        SELECT 1
-        FROM information_schema.columns
-        WHERE table_name = 'users' AND column_name = 'email'
-        LIMIT 1
-      `
-    )
+
+    const legacyEmailColumn = await pool.query(`
+      SELECT 1
+      FROM information_schema.columns
+      WHERE table_name = 'users' AND column_name = 'email'
+      LIMIT 1
+    `)
 
     if (legacyEmailColumn.rowCount > 0) {
       await pool.query(`UPDATE users SET login = COALESCE(login, email) WHERE login IS NULL AND COALESCE(email, '') <> ''`)
     }
+
     await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS users_login_key ON users (login)`)
 
-    const users = [
-      { login: 'denyson.dplacido', name: 'Denyson D. Placido', password: 'Cardway@123' },
-      { login: 'pedro.ggabe', name: 'Pedro G. Gabe', password: 'Cardway@456' },
-    ]
-
-    for (const user of users) {
+    for (const user of DEFAULT_USERS) {
       const hash = await bcrypt.hash(user.password, 12)
       await pool.query(
         `
