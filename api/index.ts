@@ -10,6 +10,7 @@ const app = express()
 const PUBLIC_DIR = path.join(process.cwd(), 'public')
 const STATIC_DIR = path.join(process.cwd(), 'api', 'static')
 const JWT_SECRET = process.env.JWT_SECRET ?? 'dev-secret-please-change-in-production'
+const DATABASE_URL = process.env.DATABASE_URL?.trim() ?? ''
 
 const LOGIN_MIN_LENGTH = 3
 const LOGIN_MAX_LENGTH = 64
@@ -17,8 +18,12 @@ const PASSWORD_MIN_LENGTH = 8
 const PASSWORD_MAX_LENGTH = 128
 
 const db = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString: DATABASE_URL || undefined,
   ssl: { rejectUnauthorized: false },
+})
+const dbSetupPromise = setupDb().catch((error: unknown) => {
+  console.error('Database setup failed:', error)
+  throw error
 })
 
 app.use(express.json())
@@ -70,6 +75,10 @@ function authMiddleware(req: AuthRequest, res: Response, next: NextFunction): vo
 }
 
 async function setupDb(): Promise<void> {
+  if (!DATABASE_URL) {
+    throw new Error('DATABASE_URL nao configurada')
+  }
+
   await db.query(`
     CREATE TABLE IF NOT EXISTS users (
       id SERIAL PRIMARY KEY,
@@ -99,9 +108,20 @@ async function setupDb(): Promise<void> {
   await db.query(`CREATE UNIQUE INDEX IF NOT EXISTS users_login_key ON users (login)`)
 }
 
-void setupDb().catch((error: unknown) => {
-  console.error('Database setup failed:', error)
-})
+async function ensureDbReady(): Promise<boolean> {
+  try {
+    await dbSetupPromise
+    return true
+  } catch (error) {
+    console.error('Database setup failed:', error)
+    return false
+  }
+}
+
+function isDatabaseConnectivityError(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error ?? '')
+  return /connect|timeout|ETIMEDOUT|ECONNREFUSED|ENOTFOUND|DATABASE_URL/i.test(message)
+}
 
 app.post('/api/auth/login', async (req: Request, res: Response): Promise<void> => {
   const { login, password } = req.body as { login?: string; password?: string }
@@ -129,6 +149,12 @@ app.post('/api/auth/login', async (req: Request, res: Response): Promise<void> =
   }
 
   try {
+    const dbReady = await ensureDbReady()
+    if (!dbReady) {
+      res.status(503).json({ error: 'Servico de autenticacao indisponivel no momento' })
+      return
+    }
+
     const result = await db.query<{
       id: number
       login: string
@@ -174,6 +200,10 @@ app.post('/api/auth/login', async (req: Request, res: Response): Promise<void> =
     res.json({ success: true, user: { login: user.login, name: user.name } })
   } catch (error) {
     console.error('Login error:', error)
+    if (isDatabaseConnectivityError(error)) {
+      res.status(503).json({ error: 'Banco de dados indisponivel' })
+      return
+    }
     res.status(500).json({ error: 'Erro interno' })
   }
 })
