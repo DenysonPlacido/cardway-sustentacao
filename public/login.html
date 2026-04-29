@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Portal Sustentação</title>
+  <title>Portal Cardway</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
@@ -11,17 +11,17 @@
     *, *::before, *::after { box-sizing: border-box; }
 
     :root {
-      --bg: #f4f6f9;
-      --surface: #ffffff;
-      --surface-soft: #f8fafc;
-      --ink: #122033;
-      --muted: #627084;
-      --line: #e4e8ee;
-      --accent: #ec7a1a;
-      --accent-dark: #d36308;
-      --brand-dark: #0e1726;
-      --shadow: 0 24px 80px rgba(15, 23, 42, 0.14);
-      --radius: 26px;
+      --bg: #111111;
+      --bg-2: #171717;
+      --panel: #0b0f16;
+      --panel-line: rgba(53, 72, 102, 0.42);
+      --field: #0f1520;
+      --field-line: #273244;
+      --text: #e8edf5;
+      --muted: #95a2b6;
+      --accent: #ff6a00;
+      --accent-2: #ff7f1f;
+      --shadow: 0 22px 70px rgba(0, 0, 0, 0.55);
       --font: 'Nunito Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     }
 
@@ -30,43 +30,60 @@
     body {
       margin: 0;
       font-family: var(--font);
+      color: var(--text);
       background:
-        radial-gradient(circle at top left, rgba(236, 122, 26, 0.12), transparent 32%),
-        radial-gradient(circle at bottom right, rgba(18, 32, 51, 0.08), transparent 30%),
-        var(--bg);
-      color: var(--ink);
-    }
-
-    .page-shell {
-      position: relative;
-      min-height: 100vh;
+        linear-gradient(180deg, rgba(0, 0, 0, 0.18), rgba(0, 0, 0, 0.18)),
+        linear-gradient(135deg, #0c0c0c 0%, #131313 40%, #0d0f13 100%);
       overflow: hidden;
     }
 
-    .ambient {
-      position: absolute;
-      border-radius: 999px;
-      filter: blur(14px);
+    .bg-grid {
+      position: fixed;
+      inset: 0;
+      overflow: hidden;
       pointer-events: none;
     }
 
-    .ambient-one {
-      top: -80px;
-      left: -60px;
-      width: 240px;
-      height: 240px;
-      background: rgba(236, 122, 26, 0.18);
-    }
-
-    .ambient-two {
-      right: -40px;
-      bottom: -60px;
-      width: 320px;
+    .hex {
+      position: absolute;
+      width: 280px;
       height: 320px;
-      background: rgba(18, 32, 51, 0.08);
+      background: linear-gradient(180deg, rgba(35, 47, 63, 0.58), rgba(18, 26, 38, 0.38));
+      clip-path: polygon(25% 6%, 75% 6%, 100% 50%, 75% 94%, 25% 94%, 0 50%);
+      opacity: 0.8;
+      filter: blur(0.2px);
     }
 
-    .login-wrapper {
+    .hex::after {
+      content: '';
+      position: absolute;
+      inset: 22% 0 0 0;
+      background: rgba(26, 42, 68, 0.55);
+      clip-path: inherit;
+      transform: scale(0.92) translateY(6px);
+    }
+
+    .h1 { top: -18px; left: -20px; }
+    .h2 { top: 128px; left: 26px; transform: scale(0.94) rotate(0.2deg); }
+    .h3 { top: 324px; left: 150px; transform: scale(0.76); opacity: 0.55; }
+    .h4 { top: 36px; right: 300px; transform: scale(0.95); }
+    .h5 { top: 208px; right: 90px; transform: scale(0.78); opacity: 0.58; }
+    .h6 { bottom: -24px; left: -28px; transform: scale(0.96); }
+    .h7 { bottom: -24px; right: 170px; transform: scale(0.94); }
+
+    .noise {
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.018) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.018) 1px, transparent 1px);
+      background-size: 48px 48px;
+      opacity: 0.14;
+      mix-blend-mode: soft-light;
+      pointer-events: none;
+    }
+
+    .shell {
       position: relative;
       z-index: 1;
       min-height: 100vh;
@@ -75,316 +92,292 @@
       padding: 32px 20px;
     }
 
-    .login-card {
-      width: min(980px, 100%);
-      min-height: 610px;
-      display: grid;
-      grid-template-columns: 0.92fr 1.08fr;
-      background: var(--surface);
-      border: 1px solid rgba(18, 32, 51, 0.06);
-      border-radius: var(--radius);
+    .card {
+      width: min(410px, 100%);
+      background: linear-gradient(180deg, rgba(8, 12, 19, 0.98), rgba(10, 14, 22, 0.98));
+      border: 1px solid var(--panel-line);
+      border-radius: 22px;
       box-shadow: var(--shadow);
-      overflow: hidden;
+      padding: 34px 38px 28px;
+      text-align: center;
+      backdrop-filter: blur(8px);
     }
 
-    .brand-panel {
-      position: relative;
-      padding: 34px 32px;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      background:
-        linear-gradient(160deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0)),
-        linear-gradient(180deg, #0f1a2c 0%, #0b1320 100%);
-      color: #f6f8fb;
-    }
-
-    .brand-panel::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background:
-        radial-gradient(circle at 20% 18%, rgba(236, 122, 26, 0.18), transparent 28%),
-        radial-gradient(circle at 86% 78%, rgba(255, 255, 255, 0.08), transparent 22%);
-      pointer-events: none;
-    }
-
-    .brand-top, .brand-copy, .brand-list { position: relative; z-index: 1; }
-
-    .brand-top {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-    }
-
-    .brand-logo {
-      width: 58px;
-      height: 58px;
-      border-radius: 18px;
-      display: grid;
-      place-items: center;
-      background: linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,.05));
-      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
-      font-weight: 800;
-      font-size: 1.05rem;
-      letter-spacing: -0.04em;
-      color: #ffffff;
-    }
-
-    .brand-kicker {
+    .brand {
       display: inline-flex;
-      align-items: center;
-      padding: 9px 14px;
-      border-radius: 999px;
-      background: rgba(255, 255, 255, 0.06);
-      color: rgba(246, 248, 251, 0.88);
-      font-size: 0.78rem;
-      font-weight: 700;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-    }
-
-    .brand-copy { max-width: 330px; }
-
-    .eyebrow {
-      margin: 0 0 14px;
-      color: rgba(255, 255, 255, 0.7);
-      font-size: 0.82rem;
-      font-weight: 700;
-      letter-spacing: 0.16em;
-      text-transform: uppercase;
-    }
-
-    .brand-copy h1 {
-      margin: 0;
-      font-size: clamp(2.6rem, 5vw, 4.2rem);
-      line-height: 0.94;
+      align-items: baseline;
+      gap: 0;
+      margin-bottom: 34px;
+      font-weight: 800;
       letter-spacing: -0.05em;
+      line-height: 1;
+      user-select: none;
+    }
+
+    .brand .card {
+      color: var(--accent);
+      font-size: 2.35rem;
+    }
+
+    .brand .way {
+      color: rgba(147, 158, 176, 0.78);
+      font-size: 2.18rem;
+      font-weight: 600;
+      margin-left: 2px;
+    }
+
+    .title {
+      margin: 0 0 10px;
+      font-size: 1.42rem;
+      line-height: 1.15;
+      color: #ffffff;
       font-weight: 800;
     }
 
-    .brand-description {
-      margin: 18px 0 0;
-      font-size: 1rem;
-      line-height: 1.7;
-      color: rgba(246, 248, 251, 0.72);
-    }
-
-    .brand-list {
-      list-style: none;
-      margin: 28px 0 0;
-      padding: 0;
-      display: grid;
-      gap: 14px;
-    }
-
-    .brand-list li {
-      position: relative;
-      padding-left: 28px;
-      color: rgba(246, 248, 251, 0.86);
+    .subtitle {
+      margin: 0 0 24px;
+      color: #89a0c0;
       font-size: 0.96rem;
       line-height: 1.45;
     }
 
-    .brand-list li::before {
-      content: '';
-      position: absolute;
-      left: 0;
-      top: 0.55rem;
-      width: 12px;
-      height: 12px;
-      border-radius: 999px;
-      background: linear-gradient(180deg, var(--accent), #ff9a3f);
-      box-shadow: 0 0 0 6px rgba(236, 122, 26, 0.12);
-    }
-
-    .form-panel {
-      padding: 42px 42px 40px;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      background: linear-gradient(180deg, #ffffff 0%, #fbfcfe 100%);
-    }
-
-    .form-header { margin-bottom: 24px; }
-
-    .form-header h2 {
-      margin: 0;
-      font-size: 1.6rem;
-      line-height: 1.1;
-      letter-spacing: -0.03em;
-      color: var(--ink);
-    }
-
-    .form-header p {
-      margin: 10px 0 0;
-      color: var(--muted);
-      font-size: 0.98rem;
-      line-height: 1.6;
-    }
-
-    .login-form {
-      display: grid;
-      gap: 18px;
-    }
-
-    .field { display: grid; gap: 9px; }
-
-    .field label {
-      color: #344357;
-      font-size: 0.86rem;
-      font-weight: 700;
-      letter-spacing: 0.03em;
+    .field {
+      position: relative;
+      margin-bottom: 16px;
     }
 
     .field input {
       width: 100%;
-      height: 52px;
-      padding: 0 16px;
-      border-radius: 14px;
-      border: 1px solid var(--line);
-      background: var(--surface-soft);
-      color: var(--ink);
-      font: inherit;
+      height: 38px;
+      border-radius: 10px;
+      border: 1px solid var(--field-line);
+      background: linear-gradient(180deg, #0b1018, #101826);
+      color: #cdd7e6;
+      padding: 0 14px;
+      font-family: inherit;
       font-size: 1rem;
       outline: none;
-      transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+      transition: border-color 0.18s ease, box-shadow 0.18s ease;
     }
 
-    .field input::placeholder { color: #98a2b2; }
+    .field input::placeholder {
+      color: #7b8aa3;
+    }
 
     .field input:focus {
-      background: #ffffff;
-      border-color: rgba(236, 122, 26, 0.55);
-      box-shadow: 0 0 0 4px rgba(236, 122, 26, 0.12);
+      border-color: rgba(255, 122, 28, 0.68);
+      box-shadow: 0 0 0 4px rgba(255, 122, 28, 0.1);
     }
 
-    .error-msg {
-      border: 1px solid rgba(218, 51, 51, 0.18);
-      background: rgba(218, 51, 51, 0.06);
-      color: #a61c1c;
-      border-radius: 14px;
-      padding: 12px 14px;
-      font-size: 0.95rem;
-      line-height: 1.45;
+    .password-wrap {
+      position: relative;
     }
 
-    .btn-login {
-      height: 52px;
-      margin-top: 4px;
+    .toggle-password {
+      position: absolute;
+      top: 50%;
+      right: 1px;
+      transform: translateY(-50%);
+      width: 40px;
+      height: 36px;
       border: 0;
-      border-radius: 14px;
-      background: linear-gradient(180deg, var(--accent), var(--accent-dark));
+      border-left: 1px solid rgba(67, 83, 110, 0.7);
+      border-radius: 0 10px 10px 0;
+      background: rgba(20, 27, 39, 0.9);
       color: #ffffff;
-      font: inherit;
-      font-size: 1rem;
-      font-weight: 800;
-      letter-spacing: 0.01em;
-      box-shadow: 0 12px 24px rgba(236, 122, 26, 0.24);
-      transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+      display: grid;
+      place-items: center;
       cursor: pointer;
     }
 
-    .btn-login:hover:not(:disabled) {
+    .toggle-password:hover { background: rgba(28, 36, 52, 0.95); }
+
+    .forgot {
+      display: block;
+      margin: -4px 0 18px;
+      text-align: right;
+      color: var(--accent);
+      font-size: 0.84rem;
+      text-decoration: none;
+    }
+
+    .forgot:hover { text-decoration: underline; }
+
+    .error {
+      display: none;
+      margin: 0 0 14px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 86, 86, 0.22);
+      background: rgba(255, 86, 86, 0.08);
+      color: #ffb2b2;
+      font-size: 0.92rem;
+      text-align: left;
+    }
+
+    .btn {
+      width: 100%;
+      height: 34px;
+      border: 0;
+      border-radius: 10px;
+      background: linear-gradient(180deg, var(--accent-2), var(--accent));
+      color: #ffffff;
+      font: inherit;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 10px 20px rgba(255, 106, 0, 0.22);
+      transition: transform 0.14s ease, box-shadow 0.14s ease, opacity 0.14s ease;
+    }
+
+    .btn:hover:not(:disabled) {
       transform: translateY(-1px);
-      box-shadow: 0 16px 26px rgba(236, 122, 26, 0.3);
+      box-shadow: 0 12px 22px rgba(255, 106, 0, 0.3);
     }
 
-    .btn-login:disabled {
-      opacity: 0.72;
-      cursor: wait;
+    .btn:disabled { opacity: 0.7; cursor: wait; }
+
+    .footer {
+      margin-top: 18px;
+      color: #b0bdd1;
+      font-size: 0.92rem;
     }
 
-    .btn-login:active:not(:disabled) {
-      transform: translateY(0);
+    .footer a {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 700;
     }
 
-    @media (max-width: 920px) {
-      .login-card { grid-template-columns: 1fr; min-height: auto; }
-      .brand-panel { padding: 28px 24px; }
-      .brand-copy h1 { font-size: clamp(2.2rem, 10vw, 3.4rem); }
-      .form-panel { padding: 30px 24px 32px; }
-    }
+    .footer a:hover { text-decoration: underline; }
 
-    @media (max-width: 560px) {
-      .login-wrapper { padding: 18px 14px; }
-      .login-card { border-radius: 22px; }
-      .brand-top { align-items: flex-start; flex-direction: column; }
-      .brand-logo { width: 52px; height: 52px; }
+    @media (max-width: 520px) {
+      .card { padding: 28px 20px 22px; border-radius: 20px; }
+      .brand .card { font-size: 2rem; }
+      .brand .way { font-size: 1.88rem; }
     }
   </style>
 </head>
 <body>
-  <div class="page-shell">
-    <div class="ambient ambient-one"></div>
-    <div class="ambient ambient-two"></div>
-
-    <main class="login-wrapper">
-      <section class="login-card" aria-label="Portal de acesso">
-        <aside class="brand-panel">
-          <div class="brand-top">
-            <div class="brand-logo">CW</div>
-            <div class="brand-kicker">Cardway</div>
-          </div>
-
-          <div class="brand-copy">
-            <p class="eyebrow">Portal interno</p>
-            <h1>Sustentação</h1>
-            <p class="brand-description">
-              Acesse as ferramentas, automações e rotinas do time em um só lugar.
-            </p>
-          </div>
-
-          <ul class="brand-list" aria-label="Recursos">
-            <li>Login seguro com sessão protegida</li>
-            <li>Ferramentas do time em um único painel</li>
-            <li>Base pronta para automações do dia a dia</li>
-          </ul>
-        </aside>
-
-        <section class="form-panel">
-          <div class="form-header">
-            <h2>Acessar conta</h2>
-            <p>Entre com seu login e senha para continuar.</p>
-          </div>
-
-          <form class="login-form" id="loginForm" novalidate>
-            <div class="field">
-              <label for="login">Login</label>
-              <input
-                type="text"
-                id="login"
-                name="login"
-                placeholder="denyson.dplacido"
-                required
-                autocomplete="username"
-                spellcheck="false"
-                autocapitalize="none"
-              />
-            </div>
-
-            <div class="field">
-              <label for="password">Senha</label>
-              <input
-                type="password"
-                id="password"
-                name="password"
-                placeholder="••••••••"
-                required
-                autocomplete="current-password"
-              />
-            </div>
-
-            <div class="error-msg" id="errorMsg" hidden></div>
-
-            <button type="submit" class="btn-login" id="submitBtn">Entrar</button>
-          </form>
-        </section>
-      </section>
-    </main>
+  <div class="bg-grid" aria-hidden="true">
+    <div class="hex h1"></div>
+    <div class="hex h2"></div>
+    <div class="hex h3"></div>
+    <div class="hex h4"></div>
+    <div class="hex h5"></div>
+    <div class="hex h6"></div>
+    <div class="hex h7"></div>
   </div>
+  <div class="noise" aria-hidden="true"></div>
 
-  <script src="../public/js/login.js"></script>
-</body>
+  <main class="shell">
+    <section class="card" aria-label="Login Cardway">
+      <div class="brand" aria-label="Cardway">
+        <span class="card">card</span><span class="way">way</span>
+      </div>
+
+      <h1 class="title">Portal do Sustentação</h1>
+      <p class="subtitle">Bem-vindo! Acesse sua conta para continuar.</p>
+
+      <form id="loginForm" novalidate>
+        <div class="field">
+          <input
+            id="login"
+            name="login"
+            type="text"
+            placeholder="E-mail Corporativo *"
+            autocomplete="username"
+            spellcheck="false"
+            autocapitalize="none"
+            required
+          />
+        </div>
+
+        <div class="field password-wrap">
+          <input
+            id="password"
+            name="password"
+            type="password"
+            placeholder="Senha *"
+            autocomplete="current-password"
+            required
+          />
+          <button type="button" class="toggle-password" id="togglePassword" aria-label="Mostrar senha">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M1.5 12s4-7.5 10.5-7.5S22.5 12 22.5 12s-4 7.5-10.5 7.5S1.5 12 1.5 12Z" />
+              <circle cx="12" cy="12" r="3.2" />
+            </svg>
+          </button>
+        </div>
+
+        <a class="forgot" href="#">Esqueci minha senha</a>
+
+        <div class="error" id="errorMsg"></div>
+
+        <button class="btn" id="submitBtn" type="submit">Entrar</button>
+      </form>
+
+      <div class="footer">
+        Novo por aqui? <a href="#">Crie uma conta</a>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const form = document.getElementById('loginForm')
+    const loginInput = document.getElementById('login')
+    const passwordInput = document.getElementById('password')
+    const errorMsg = document.getElementById('errorMsg')
+    const submitBtn = document.getElementById('submitBtn')
+    const togglePassword = document.getElementById('togglePassword')
+
+    function showError(message) {
+      errorMsg.textContent = message
+      errorMsg.style.display = 'block'
+    }
+
+    function hideError() {
+      errorMsg.textContent = ''
+      errorMsg.style.display = 'none'
+    }
+
+    togglePassword.addEventListener('click', () => {
+      const showing = passwordInput.type === 'text'
+      passwordInput.type = showing ? 'password' : 'text'
+      togglePassword.setAttribute('aria-label', showing ? 'Mostrar senha' : 'Ocultar senha')
+    })
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault()
+      hideError()
+      submitBtn.disabled = true
+      submitBtn.textContent = 'Entrando...'
+
+      try {
+        const response = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({
+            login: loginInput.value.trim(),
+            password: passwordInput.value,
+          }),
+        })
+
+        const data = await response.json().catch(() => ({}))
+
+        if (!response.ok) {
+          showError(data.error || 'Credenciais inválidas')
+          return
+        }
+
+        window.location.href = '/home'
+      } catch (error) {
+        showError('Erro de conexão. Tente novamente.')
+      } finally {
+        submitBtn.disabled = false
+        submitBtn.textContent = 'Entrar'
+      }
+    })
+  </script></body>
 </html>

@@ -1,11 +1,5 @@
 const { Pool } = require('pg')
 const bcrypt = require('bcryptjs')
-const crypto = require('crypto')
-
-function makeTempPassword() {
-  return `${crypto.randomBytes(8).toString('base64url')}Aa1!`
-}
-
 async function main() {
   const pool = new Pool({
     host: process.env.PGHOST,
@@ -47,8 +41,8 @@ async function main() {
     await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS users_login_key ON users (login)`)
 
     const users = [
-      { login: 'denyson.dplacido', name: 'Denyson D. Placido', password: makeTempPassword() },
-      { login: 'pedro.ggabe', name: 'Pedro G. Gabe', password: makeTempPassword() },
+      { login: 'denyson.dplacido', name: 'Denyson D. Placido', password: 'Cardway@123' },
+      { login: 'pedro.ggabe', name: 'Pedro G. Gabe', password: 'Cardway@456' },
     ]
 
     for (const user of users) {

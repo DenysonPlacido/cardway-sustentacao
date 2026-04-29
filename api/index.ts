@@ -41,11 +41,17 @@ function normalizeLogin(value: string): string {
 }
 
 function isValidLogin(value: string): boolean {
-  return /^[a-z0-9._-]+$/.test(value)
+  return /^[a-z0-9._@-]+$/.test(value)
 }
 
 function isValidPassword(value: string): boolean {
   return value.length >= PASSWORD_MIN_LENGTH && value.length <= PASSWORD_MAX_LENGTH
+}
+
+function resolveLoginLookup(value: string): string[] {
+  const normalized = normalizeLogin(value)
+  const localPart = normalized.includes('@') ? normalized.split('@')[0] : normalized
+  return localPart === normalized ? [normalized] : [normalized, localPart]
 }
 
 function authMiddleware(req: AuthRequest, res: Response, next: NextFunction): void {
@@ -106,6 +112,7 @@ app.post('/api/auth/login', async (req: Request, res: Response): Promise<void> =
   }
 
   const normalizedLogin = normalizeLogin(login)
+  const lookupLogins = resolveLoginLookup(login)
 
   if (
     normalizedLogin.length < LOGIN_MIN_LENGTH ||
@@ -129,8 +136,13 @@ app.post('/api/auth/login', async (req: Request, res: Response): Promise<void> =
       password_hash: string
       is_active: boolean
     }>(
-      'SELECT id, login, name, password_hash, is_active FROM users WHERE login = $1 LIMIT 1',
-      [normalizedLogin]
+      `
+        SELECT id, login, name, password_hash, is_active
+        FROM users
+        WHERE login = ANY($1::text[])
+        LIMIT 1
+      `,
+      [lookupLogins]
     )
 
     const user = result.rows[0]
