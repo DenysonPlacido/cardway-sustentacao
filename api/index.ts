@@ -21,9 +21,9 @@ const db = new Pool({
   connectionString: DATABASE_URL || undefined,
   ssl: { rejectUnauthorized: false },
 })
-const dbSetupPromise = setupDb().catch((error: unknown) => {
+const dbSetupPromise = setupDb().then(() => true).catch((error: unknown) => {
   console.error('Database setup failed:', error)
-  throw error
+  return false
 })
 
 app.use(express.json())
@@ -109,18 +109,30 @@ async function setupDb(): Promise<void> {
 }
 
 async function ensureDbReady(): Promise<boolean> {
-  try {
-    await dbSetupPromise
-    return true
-  } catch (error) {
-    console.error('Database setup failed:', error)
-    return false
-  }
+  return dbSetupPromise
 }
 
 function isDatabaseConnectivityError(error: unknown): boolean {
   const message = error instanceof Error ? error.message : String(error ?? '')
   return /connect|timeout|ETIMEDOUT|ECONNREFUSED|ENOTFOUND|DATABASE_URL/i.test(message)
+}
+
+function getDatabaseUnavailableMessage(error: unknown): string {
+  const message = error instanceof Error ? error.message : String(error ?? '')
+
+  if (/DATABASE_URL nao configurada/i.test(message)) {
+    return 'Banco nao configurado no deploy'
+  }
+
+  if (/ENOTFOUND/i.test(message)) {
+    return 'Banco configurado com host invalido'
+  }
+
+  if (/ETIMEDOUT|ECONNREFUSED|timeout/i.test(message)) {
+    return 'Banco indisponivel ou sem acesso de rede'
+  }
+
+  return 'Banco de dados indisponivel'
 }
 
 app.post('/api/auth/login', async (req: Request, res: Response): Promise<void> => {
@@ -201,7 +213,7 @@ app.post('/api/auth/login', async (req: Request, res: Response): Promise<void> =
   } catch (error) {
     console.error('Login error:', error)
     if (isDatabaseConnectivityError(error)) {
-      res.status(503).json({ error: 'Banco de dados indisponivel' })
+      res.status(503).json({ error: getDatabaseUnavailableMessage(error) })
       return
     }
     res.status(500).json({ error: 'Erro interno' })
