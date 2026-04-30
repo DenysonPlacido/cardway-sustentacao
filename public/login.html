@@ -7,231 +7,309 @@
   <meta name="description" content="Acesso ao portal de sustentação da Cardway." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="icon" href="/favicon.ico" type="image/svg+xml" />
-  <link rel="shortcut icon" href="/favicon.ico" type="image/svg+xml" />
   <style>
     :root {
       color-scheme: dark;
-      --bg-1: #06070a;
-      --bg-2: #0d1117;
-      --panel: rgba(12, 16, 24, 0.96);
-      --panel-border: rgba(71, 89, 118, 0.45);
-      --field: #101826;
-      --field-border: #273244;
-      --text: #e9eef7;
-      --muted: #92a0b6;
-      --accent: #ff6a00;
-      --accent-2: #ff8a2a;
-      --shadow: 0 24px 72px rgba(0, 0, 0, 0.58);
+      --bg:           #080b11;
+      --surface:      #0d1120;
+      --surface-2:    #111827;
+      --border:       rgba(255,255,255,0.07);
+      --border-focus: rgba(255,106,0,0.6);
+      --text:         #f0f4ff;
+      --text-2:       #8b98b4;
+      --text-3:       #5a6680;
+      --accent:       #ff6a00;
+      --accent-2:     #ff8c38;
+      --accent-glow:  rgba(255,106,0,0.18);
+      --red:          rgba(255,80,80,0.12);
+      --red-text:     #ff9494;
     }
 
-    * { box-sizing: border-box; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    html, body { min-height: 100%; }
-
-    body {
-      margin: 0;
-      font-family: 'Nunito Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    html, body {
+      height: 100%;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
       color: var(--text);
-      background:
-        radial-gradient(circle at top, rgba(255, 106, 0, 0.14), transparent 34%),
-        linear-gradient(180deg, rgba(6, 7, 10, 0.95), rgba(6, 7, 10, 0.98)),
-        linear-gradient(135deg, var(--bg-1), var(--bg-2));
+      background: var(--bg);
     }
 
+    /* ── Hexagonal background ── */
+    .hex-field {
+      position: fixed; inset: 0;
+      overflow: hidden; pointer-events: none; z-index: 0;
+    }
+    .hex {
+      position: absolute;
+      clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+    }
+    .hex-1 { width:460px; height:530px; bottom:-140px; left:-100px;  background:linear-gradient(135deg,#1e2c3a,#0f1820); opacity:.92; }
+    .hex-2 { width:330px; height:380px; bottom: 40px;  left: 140px;  background:linear-gradient(135deg,#20303e,#101a24); opacity:.85; }
+    .hex-3 { width:230px; height:265px; bottom:300px;  left: -20px;  background:linear-gradient(135deg,#1a2a38,#121e2a); opacity:.78; }
+    .hex-4 { width:340px; height:392px; top:  -90px;   right:-100px; background:linear-gradient(135deg,#1e2c3a,#0f1820); opacity:.75; }
+    .hex-5 { width:230px; height:265px; top:   34%;    right:   0px; background:linear-gradient(135deg,#192636,#111d28); opacity:.68; }
+    .hex-6 { width:170px; height:196px; bottom: 10%;   right: -40px; background:linear-gradient(135deg,#1c2a38,#121e2c); opacity:.65; }
+
+    /* ── Grid overlay ── */
     .grid {
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
+      position: fixed; inset: 0; pointer-events: none; z-index: 0;
       background-image:
-        linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
-      background-size: 52px 52px;
-      opacity: 0.45;
-      mask-image: radial-gradient(circle at center, black 30%, transparent 78%);
+        linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+      background-size: 48px 48px;
+      mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 30%, transparent 80%);
     }
 
+    /* ── Orange ambient glow at top ── */
+    .glow-top {
+      position: fixed; inset: 0; pointer-events: none; z-index: 0;
+      background: radial-gradient(ellipse 60% 40% at 50% -5%, rgba(255,106,0,0.12), transparent);
+    }
+
+    /* ── Shell ── */
     .shell {
-      position: relative;
-      z-index: 1;
+      position: relative; z-index: 1;
       min-height: 100vh;
-      display: grid;
-      place-items: center;
-      padding: 32px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 32px 20px;
     }
 
+    /* ── Card ── */
     .card {
-      width: min(420px, 100%);
-      padding: 34px 36px 30px;
-      border: 1px solid var(--panel-border);
-      border-radius: 24px;
-      background: var(--panel);
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(10px);
+      width: min(440px, 100%);
+      background: linear-gradient(160deg, rgba(17,24,40,0.98) 0%, rgba(10,14,24,0.99) 100%);
+      border: 1px solid var(--border);
+      border-top-color: rgba(255,106,0,0.28);
+      border-radius: 20px;
+      padding: 40px 40px 36px;
+      box-shadow:
+        0 0 0 1px rgba(255,106,0,0.05),
+        0 32px 80px rgba(0,0,0,0.65),
+        inset 0 1px 0 rgba(255,255,255,0.04);
+      backdrop-filter: blur(24px);
     }
 
+    /* ── Brand ── */
     .brand {
       display: flex;
-      justify-content: center;
-      margin-bottom: 26px;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 32px;
     }
 
-    .brand-logo {
-      width: 178px;
-      max-width: 100%;
+    .brand-logo { width: 160px; display: block; }
+
+    .brand-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      border-radius: 100px;
+      background: rgba(255,106,0,0.1);
+      border: 1px solid rgba(255,106,0,0.2);
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--accent-2);
+    }
+
+    .brand-badge-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 6px var(--accent);
+    }
+
+    /* ── Heading ── */
+    .heading { margin-bottom: 28px; }
+
+    .heading h1 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+
+    .heading p {
+      font-size: 0.88rem;
+      color: var(--text-2);
+      line-height: 1.5;
+    }
+
+    /* ── Divider ── */
+    .divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--border), transparent);
+      margin-bottom: 24px;
+    }
+
+    /* ── Fields ── */
+    .field { margin-bottom: 16px; }
+
+    .field-label {
       display: block;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-2);
+      margin-bottom: 7px;
+      letter-spacing: 0.01em;
     }
 
-    .title {
-      margin: 0 0 8px;
-      font-size: 1.45rem;
-      line-height: 1.1;
-      font-weight: 800;
-      text-align: center;
-    }
-
-    .subtitle {
-      margin: 0 0 24px;
-      color: var(--muted);
-      text-align: center;
-      line-height: 1.45;
-      font-size: 0.96rem;
-    }
-
-    .field {
-      margin-bottom: 14px;
-    }
-
-    .input-wrap {
-      position: relative;
-    }
+    .input-wrap { position: relative; }
 
     .input-wrap input {
       width: 100%;
-      height: 44px;
-      border: 1px solid var(--field-border);
-      border-radius: 12px;
-      background: linear-gradient(180deg, #0b1018, var(--field));
-      color: var(--text);
+      height: 46px;
       padding: 0 14px;
-      font: inherit;
+      background: var(--surface);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 10px;
+      color: var(--text);
+      font: 500 0.92rem 'Inter', sans-serif;
       outline: none;
-      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+      transition: border-color 0.15s, box-shadow 0.15s;
     }
 
-    .input-wrap input::placeholder { color: #76849b; }
+    .input-wrap input::placeholder { color: var(--text-3); }
 
     .input-wrap input:focus {
-      border-color: rgba(255, 122, 28, 0.72);
-      box-shadow: 0 0 0 4px rgba(255, 122, 28, 0.12);
+      border-color: var(--border-focus);
+      box-shadow: 0 0 0 3px rgba(255,106,0,0.1);
     }
 
-    .password-row {
-      position: relative;
-    }
-
-    .toggle-password {
+    .input-suffix {
       position: absolute;
-      top: 50%;
-      right: 1px;
+      top: 50%; right: 1px;
       transform: translateY(-50%);
-      width: 42px;
-      height: 42px;
+      width: 44px; height: 44px;
+      display: grid; place-items: center;
       border: 0;
-      border-left: 1px solid rgba(71, 89, 118, 0.75);
-      border-radius: 0 12px 12px 0;
-      background: rgba(17, 24, 38, 0.96);
-      color: #fff;
-      display: grid;
-      place-items: center;
+      border-left: 1px solid rgba(255,255,255,0.06);
+      border-radius: 0 10px 10px 0;
+      background: transparent;
+      color: var(--text-2);
       cursor: pointer;
+      transition: color 0.15s;
     }
 
-    .toggle-password:hover { background: rgba(24, 32, 48, 0.98); }
+    .input-suffix:hover { color: var(--text); }
 
-    .forgot {
-      display: inline-flex;
-      margin: 4px 0 16px;
+    /* ── Row links ── */
+    .row-link {
+      display: flex;
+      justify-content: flex-end;
+      margin: -4px 0 20px;
+    }
+
+    .link {
+      font-size: 0.82rem;
+      font-weight: 500;
       color: var(--accent);
-      font-size: 0.88rem;
       text-decoration: none;
+      transition: opacity 0.15s;
+    }
+    .link:hover { opacity: 0.8; text-decoration: underline; }
+
+    /* ── Error ── */
+    .error-box {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 12px 14px;
+      margin-bottom: 16px;
+      border-radius: 10px;
+      background: var(--red);
+      border: 1px solid rgba(255,80,80,0.2);
+      color: var(--red-text);
+      font-size: 0.86rem;
+      line-height: 1.4;
     }
 
-    .forgot:hover { text-decoration: underline; }
-
-    .error {
-      min-height: 46px;
-      margin-bottom: 14px;
-      padding: 11px 12px;
-      border-radius: 12px;
-      border: 1px solid rgba(255, 107, 107, 0.28);
-      background: rgba(255, 107, 107, 0.09);
-      color: #ffb6b6;
-      line-height: 1.35;
-      font-size: 0.92rem;
-    }
-
-    .btn {
+    /* ── Button ── */
+    .btn-primary {
       width: 100%;
-      height: 44px;
-      border: 0;
-      border-radius: 12px;
-      background: linear-gradient(180deg, var(--accent-2), var(--accent));
+      height: 48px;
+      border: none;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--accent-2) 0%, var(--accent) 100%);
       color: #fff;
-      font: inherit;
-      font-weight: 800;
+      font: 700 0.95rem 'Inter', sans-serif;
+      letter-spacing: 0.01em;
       cursor: pointer;
-      box-shadow: 0 12px 26px rgba(255, 106, 0, 0.22);
-      transition: transform 0.14s ease, box-shadow 0.14s ease, opacity 0.14s ease;
+      box-shadow: 0 8px 28px rgba(255,106,0,0.28);
+      transition: transform 0.14s, box-shadow 0.14s, opacity 0.14s;
     }
 
-    .btn:hover:not(:disabled) {
+    .btn-primary:hover:not(:disabled) {
       transform: translateY(-1px);
-      box-shadow: 0 14px 30px rgba(255, 106, 0, 0.30);
+      box-shadow: 0 12px 36px rgba(255,106,0,0.38);
     }
 
-    .btn:disabled {
-      cursor: wait;
-      opacity: 0.72;
-    }
+    .btn-primary:active:not(:disabled) { transform: translateY(0); }
 
-    .footer {
-      margin-top: 16px;
+    .btn-primary:disabled { opacity: 0.6; cursor: wait; }
+
+    /* ── Footer ── */
+    .card-footer {
+      margin-top: 24px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
       text-align: center;
-      color: #b2bed0;
-      font-size: 0.92rem;
+      font-size: 0.85rem;
+      color: var(--text-2);
     }
 
-    .footer a {
-      color: var(--accent);
-      text-decoration: none;
-      font-weight: 700;
-    }
-
-    .footer a:hover { text-decoration: underline; }
+    .card-footer a { color: var(--accent); text-decoration: none; font-weight: 600; }
+    .card-footer a:hover { text-decoration: underline; }
   </style>
 </head>
 <body>
+
+  <div class="hex-field" aria-hidden="true">
+    <div class="hex hex-1"></div>
+    <div class="hex hex-2"></div>
+    <div class="hex hex-3"></div>
+    <div class="hex hex-4"></div>
+    <div class="hex hex-5"></div>
+    <div class="hex hex-6"></div>
+  </div>
   <div class="grid" aria-hidden="true"></div>
+  <div class="glow-top" aria-hidden="true"></div>
 
   <main class="shell">
     <section class="card" aria-label="Login Cardway">
-      <div class="brand" aria-label="Cardway">
+
+      <div class="brand">
         <img class="brand-logo" src="/cardway-logo-DmLFa68k.svg" alt="Cardway" />
+        <span class="brand-badge">
+          <span class="brand-badge-dot"></span>
+          Portal de Sustentação
+        </span>
       </div>
 
-      <h1 class="title">Portal de Sustentação</h1>
-      <p class="subtitle">Bem-vindo. Entre com suas credenciais para continuar.</p>
+      <div class="heading">
+        <h1>Bem-vindo de volta</h1>
+        <p>Entre com suas credenciais para acessar o portal.</p>
+      </div>
+
+      <div class="divider"></div>
 
       <form id="loginForm" novalidate>
+
         <div class="field">
+          <label class="field-label" for="login">Login</label>
           <div class="input-wrap">
             <input
               id="login"
               name="login"
               type="text"
-              placeholder="E-mail corporativo *"
+              placeholder="seu.login"
               autocomplete="username"
               spellcheck="false"
               autocapitalize="none"
@@ -240,35 +318,40 @@
           </div>
         </div>
 
-        <div class="field password-row">
+        <div class="field">
+          <label class="field-label" for="password">Senha</label>
           <div class="input-wrap">
             <input
               id="password"
               name="password"
               type="password"
-              placeholder="Senha *"
+              placeholder="••••••••"
               autocomplete="current-password"
               required
             />
-            <button type="button" class="toggle-password" id="togglePassword" aria-label="Mostrar senha">
-              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M1.5 12s4-7.5 10.5-7.5S22.5 12 22.5 12s-4 7.5-10.5 7.5S1.5 12 1.5 12Z" />
-                <circle cx="12" cy="12" r="3.2" />
+            <button type="button" class="input-suffix" id="togglePassword" aria-label="Mostrar senha">
+              <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M1.5 12s4-7.5 10.5-7.5S22.5 12 22.5 12s-4 7.5-10.5 7.5S1.5 12 1.5 12Z"/>
+                <circle cx="12" cy="12" r="3.2"/>
               </svg>
             </button>
           </div>
         </div>
 
-        <a class="forgot" href="#">Esqueci minha senha</a>
+        <div class="row-link">
+          <a class="link" href="#">Esqueci minha senha</a>
+        </div>
 
-        <div class="error" id="errorMsg" hidden></div>
+        <div class="error-box" id="errorMsg" hidden></div>
 
-        <button class="btn" id="submitBtn" type="submit">Entrar</button>
+        <button class="btn-primary" id="submitBtn" type="submit">Entrar</button>
+
       </form>
 
-      <div class="footer">
-        Novo por aqui? <a href="#">Crie uma conta</a>
+      <div class="card-footer">
+        Precisa de acesso? <a href="#">Fale com o administrador</a>
       </div>
+
     </section>
   </main>
 
