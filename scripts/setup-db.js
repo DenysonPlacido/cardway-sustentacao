@@ -3,10 +3,13 @@ require('dotenv').config()
 const { Pool } = require('pg')
 const bcrypt = require('bcryptjs')
 
-const DEFAULT_USERS = [
-  { login: 'denyson.dplacido', name: 'Denyson D. Placido', password: 'Cardway@123' },
-  { login: 'pedro.ggabe', name: 'Pedro G. Gabe', password: 'Cardway@456' },
-]
+function getSeedUsers() {
+  try {
+    return JSON.parse(process.env.SEED_USERS ?? '[]')
+  } catch {
+    return []
+  }
+}
 
 function createPool() {
   const connectionString = process.env.DATABASE_URL?.trim()
@@ -60,7 +63,7 @@ async function main() {
 
     await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS users_login_key ON users (login)`)
 
-    for (const user of DEFAULT_USERS) {
+    for (const user of getSeedUsers()) {
       const hash = await bcrypt.hash(user.password, 12)
       await pool.query(
         `
@@ -74,7 +77,7 @@ async function main() {
         `,
         [user.login, user.name, hash]
       )
-      console.log(`${user.login}=${user.password}`)
+      console.log(`seeded: ${user.login}`)
     }
 
     console.log('schema-ok')
