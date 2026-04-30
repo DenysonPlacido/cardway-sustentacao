@@ -7,7 +7,7 @@ import path from 'path'
 import { Pool } from 'pg'
 
 const app = express()
-const PUBLIC_DIR = path.join(process.cwd(), 'public')
+const PUBLIC_DIR = path.join(__dirname, '..', 'public')
 const JWT_SECRET = process.env.JWT_SECRET ?? 'dev-secret-please-change-in-production'
 const DATABASE_URL = process.env.DATABASE_URL?.trim() ?? ''
 interface SeedUser { login: string; name: string; password: string }
