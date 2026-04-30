@@ -20,6 +20,8 @@ function getSeedUsers(): SeedUser[] {
   }
 }
 
+const SESSION_MINUTES = 30
+
 const LOGIN_MIN_LENGTH = 3
 const LOGIN_MAX_LENGTH = 64
 const PASSWORD_MIN_LENGTH = 8
@@ -219,14 +221,14 @@ app.post('/api/auth/login', async (req: Request, res: Response): Promise<void> =
     const token = jwt.sign(
       { id: 0, login: normalizedLogin, name: normalizedLogin } satisfies JwtPayload,
       JWT_SECRET,
-      { expiresIn: '30m' }
+      { expiresIn: `${SESSION_MINUTES}m` }
     )
 
     res.cookie('token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
-      maxAge: 30 * 60 * 1000,
+      maxAge: SESSION_MINUTES * 60 * 1000,
     })
 
     res.json({ success: true, user: { login: normalizedLogin, name: normalizedLogin } })
@@ -250,7 +252,7 @@ app.post('/api/auth/refresh', authMiddleware, (req: AuthRequest, res: Response):
   const token = jwt.sign(
     { id: user.id, login: user.login, name: user.name } satisfies JwtPayload,
     JWT_SECRET,
-    { expiresIn: '30m' }
+    { expiresIn: `${SESSION_MINUTES}m` }
   )
   res.cookie('token', token, {
     httpOnly: true,
