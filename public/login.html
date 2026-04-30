@@ -29,6 +29,43 @@
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+    [hidden] { display: none !important; }
+
+    /* ── Modal ── */
+    .modal-overlay {
+      position: fixed; inset: 0; z-index: 100;
+      background: rgba(0,0,0,0.72);
+      backdrop-filter: blur(4px);
+      display: flex; align-items: center; justify-content: center;
+      padding: 20px;
+    }
+    .modal-box {
+      width: min(420px, 100%);
+      background: linear-gradient(160deg, rgba(17,24,40,0.99) 0%, rgba(10,14,24,0.99) 100%);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-top-color: rgba(255,106,0,0.3);
+      border-radius: 16px;
+      padding: 32px 32px 28px;
+      box-shadow: 0 32px 80px rgba(0,0,0,0.7);
+    }
+    .modal-title {
+      font-size: 1.1rem; font-weight: 700;
+      color: var(--text); margin-bottom: 10px;
+    }
+    .modal-body {
+      font-size: 0.88rem; color: var(--text-2);
+      line-height: 1.6; margin-bottom: 24px;
+    }
+    .modal-body strong { color: var(--text); }
+    .modal-actions { display: flex; gap: 10px; }
+    .btn-secondary {
+      flex: 1; height: 42px; border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 10px; background: transparent;
+      color: var(--text-2); font: 600 0.88rem 'Inter', sans-serif;
+      cursor: pointer; transition: border-color 0.15s, color 0.15s;
+    }
+    .btn-secondary:hover { border-color: rgba(255,255,255,0.2); color: var(--text); }
+
     html, body {
       height: 100%;
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -339,7 +376,7 @@
         </div>
 
         <div class="row-link">
-          <a class="link" href="#">Esqueci minha senha</a>
+          <a class="link" href="#" id="forgotLink">Esqueci minha senha</a>
         </div>
 
         <div class="error-box" id="errorMsg" hidden></div>
@@ -349,12 +386,43 @@
       </form>
 
       <div class="card-footer">
-        Precisa de acesso? <a href="#">Fale com o administrador</a>
+        &copy; 2026 CardSust.
       </div>
 
     </section>
   </main>
 
+  <!-- Modal Esqueci minha senha -->
+  <div class="modal-overlay" id="forgotModal" hidden>
+    <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="forgotTitle">
+      <p class="modal-title" id="forgotTitle">Recuperar senha</p>
+      <p class="modal-body">
+        A senha do Portal de Sustentação é a <strong>mesma senha do SGV</strong>.<br><br>
+        Para recuperá-la, acesse a página de recuperação do SGV e informe seu e-mail corporativo — você receberá as instruções por e-mail.
+      </p>
+      <div class="modal-actions">
+        <button class="btn-secondary" id="forgotClose">Fechar</button>
+        <a href="https://sgv.redetendencia.com.br/sgv/login/lembrarSenha.jsf"
+           target="_blank" rel="noopener"
+           class="btn-primary" style="display:flex;align-items:center;justify-content:center;text-decoration:none;flex:1;height:42px;font-size:0.88rem;">
+          Ir para o SGV
+        </a>
+      </div>
+    </div>
+  </div>
+
   <script src="/js/login.js" defer></script>
+  <script>
+    document.getElementById('forgotLink').addEventListener('click', function(e) {
+      e.preventDefault()
+      document.getElementById('forgotModal').hidden = false
+    })
+    document.getElementById('forgotClose').addEventListener('click', function() {
+      document.getElementById('forgotModal').hidden = true
+    })
+    document.getElementById('forgotModal').addEventListener('click', function(e) {
+      if (e.target === this) this.hidden = true
+    })
+  </script>
 </body>
 </html>
