@@ -141,6 +141,25 @@ async function ensureDbReady(): Promise<boolean> {
   return dbSetupPromise
 }
 
+const SGV_LOGIN_URL = 'https://sgv.redetendencia.com.br/sgv/j_spring_security_check'
+
+async function validateWithSgv(login: string, password: string): Promise<boolean> {
+  try {
+    const body = new URLSearchParams({ j_username: login, j_password: password })
+    const res = await fetch(SGV_LOGIN_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: body.toString(),
+      redirect: 'manual',
+    })
+    if (res.status !== 302) return false
+    const location = res.headers.get('location') ?? ''
+    return !location.includes('autenticacao') && !location.includes('login_error')
+  } catch {
+    return false
+  }
+}
+
 function isDatabaseConnectivityError(error: unknown): boolean {
   const message = error instanceof Error ? error.message : String(error ?? '')
   return /connect|timeout|ETIMEDOUT|ECONNREFUSED|ENOTFOUND|DATABASE_URL/i.test(message)
@@ -190,43 +209,14 @@ app.post('/api/auth/login', async (req: Request, res: Response): Promise<void> =
   }
 
   try {
-    const dbReady = await ensureDbReady()
-    if (!dbReady) {
-      res.status(503).json({ error: 'Servico de autenticacao indisponivel no momento' })
-      return
-    }
-
-    const result = await db.query<{
-      id: number
-      login: string
-      name: string
-      password_hash: string
-      is_active: boolean
-    }>(
-      `
-        SELECT id, login, name, password_hash, is_active
-        FROM users
-        WHERE login = ANY($1::text[])
-        LIMIT 1
-      `,
-      [lookupLogins]
-    )
-
-    const user = result.rows[0]
-
-    if (!user || !user.is_active) {
-      res.status(401).json({ error: 'Credenciais invalidas' })
-      return
-    }
-
-    const passwordMatches = await bcrypt.compare(password, user.password_hash)
-    if (!passwordMatches) {
+    const sgvValid = await validateWithSgv(normalizedLogin, password)
+    if (!sgvValid) {
       res.status(401).json({ error: 'Credenciais invalidas' })
       return
     }
 
     const token = jwt.sign(
-      { id: user.id, login: user.login, name: user.name } satisfies JwtPayload,
+      { id: 0, login: normalizedLogin, name: normalizedLogin } satisfies JwtPayload,
       JWT_SECRET,
       { expiresIn: '8h' }
     )
@@ -238,7 +228,7 @@ app.post('/api/auth/login', async (req: Request, res: Response): Promise<void> =
       maxAge: 8 * 60 * 60 * 1000,
     })
 
-    res.json({ success: true, user: { login: user.login, name: user.name } })
+    res.json({ success: true, user: { login: normalizedLogin, name: normalizedLogin } })
   } catch (error) {
     console.error('Login error:', error)
     if (isDatabaseConnectivityError(error)) {
