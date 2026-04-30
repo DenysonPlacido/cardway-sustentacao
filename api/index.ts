@@ -11,10 +11,15 @@ const PUBLIC_DIR = path.join(process.cwd(), 'public')
 const STATIC_DIR = path.join(process.cwd(), 'api', 'static')
 const JWT_SECRET = process.env.JWT_SECRET ?? 'dev-secret-please-change-in-production'
 const DATABASE_URL = process.env.DATABASE_URL?.trim() ?? ''
-const DEFAULT_USERS = [
-  { login: 'denyson.dplacido', name: 'Denyson D. Placido', password: 'Cardway@123' },
-  { login: 'pedro.ggabe', name: 'Pedro G. Gabe', password: 'Cardway@456' },
-]
+interface SeedUser { login: string; name: string; password: string }
+
+function getSeedUsers(): SeedUser[] {
+  try {
+    return JSON.parse(process.env.SEED_USERS ?? '[]') as SeedUser[]
+  } catch {
+    return []
+  }
+}
 
 const LOGIN_MIN_LENGTH = 3
 const LOGIN_MAX_LENGTH = 64
@@ -116,7 +121,7 @@ async function setupDb(): Promise<void> {
   await db.query(`CREATE UNIQUE INDEX IF NOT EXISTS users_login_key ON users (login)`)
 
   if (process.env.NODE_ENV !== 'production') {
-    for (const user of DEFAULT_USERS) {
+    for (const user of getSeedUsers()) {
       const hash = await bcrypt.hash(user.password, 12)
       await db.query(
         `
