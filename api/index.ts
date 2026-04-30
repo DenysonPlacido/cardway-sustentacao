@@ -8,7 +8,6 @@ import { Pool } from 'pg'
 
 const app = express()
 const PUBLIC_DIR = path.join(process.cwd(), 'public')
-const STATIC_DIR = path.join(process.cwd(), 'api', 'static')
 const JWT_SECRET = process.env.JWT_SECRET ?? 'dev-secret-please-change-in-production'
 const DATABASE_URL = process.env.DATABASE_URL?.trim() ?? ''
 interface SeedUser { login: string; name: string; password: string }
@@ -41,7 +40,6 @@ app.get('/favicon.ico', (_req: Request, res: Response): void => {
   res.type('image/svg+xml')
   res.sendFile(path.join(PUBLIC_DIR, 'cardway-logo-DmLFa68k.svg'))
 })
-app.use('/api/static', express.static(STATIC_DIR))
 app.use(express.static(PUBLIC_DIR))
 
 interface JwtPayload {
