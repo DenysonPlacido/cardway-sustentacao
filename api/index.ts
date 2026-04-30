@@ -46,6 +46,7 @@ interface JwtPayload {
   id: number
   login: string
   name: string
+  exp?: number
 }
 
 interface AuthRequest extends Request {
@@ -218,14 +219,14 @@ app.post('/api/auth/login', async (req: Request, res: Response): Promise<void> =
     const token = jwt.sign(
       { id: 0, login: normalizedLogin, name: normalizedLogin } satisfies JwtPayload,
       JWT_SECRET,
-      { expiresIn: '8h' }
+      { expiresIn: '30m' }
     )
 
     res.cookie('token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
-      maxAge: 8 * 60 * 60 * 1000,
+      maxAge: 30 * 60 * 1000,
     })
 
     res.json({ success: true, user: { login: normalizedLogin, name: normalizedLogin } })
@@ -241,6 +242,22 @@ app.post('/api/auth/login', async (req: Request, res: Response): Promise<void> =
 
 app.post('/api/auth/logout', (_req: Request, res: Response): void => {
   res.clearCookie('token')
+  res.json({ success: true })
+})
+
+app.post('/api/auth/refresh', authMiddleware, (req: AuthRequest, res: Response): void => {
+  const user = req.user!
+  const token = jwt.sign(
+    { id: user.id, login: user.login, name: user.name } satisfies JwtPayload,
+    JWT_SECRET,
+    { expiresIn: '30m' }
+  )
+  res.cookie('token', token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+    maxAge: 30 * 60 * 1000,
+  })
   res.json({ success: true })
 })
 

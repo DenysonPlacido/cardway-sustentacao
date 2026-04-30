@@ -1,4 +1,4 @@
-interface UserInfo { id: number; login: string; name: string }
+interface UserInfo { id: number; login: string; name: string; exp?: number }
 
 const TITLES: Record<string, string> = {
   painel:        'Painel',
@@ -8,6 +8,8 @@ const TITLES: Record<string, string> = {
 }
 
 let activeSection = 'painel'
+let sessionExpAt = 0
+let timerInterval: ReturnType<typeof setInterval> | null = null
 
 // ─── Auth ─────────────────────────────────────────────────────────────────────
 
@@ -20,6 +22,62 @@ async function checkAuth(): Promise<UserInfo> {
 async function logout(): Promise<void> {
   await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' })
   window.location.href = '/login'
+}
+
+// ─── Session timer ────────────────────────────────────────────────────────────
+
+function formatTime(ms: number): string {
+  const total = Math.max(0, Math.floor(ms / 1000))
+  const m = Math.floor(total / 60)
+  const s = total % 60
+  return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
+}
+
+function setAlertLevel(level: null | 'warn' | 'urgent'): void {
+  const banner = document.getElementById('sessionAlert')!
+  const text   = document.getElementById('sessionAlertText')!
+  const timer  = document.getElementById('sessionTimer')!
+  if (!level) {
+    banner.hidden = true
+    timer.className = 'session-timer'
+    return
+  }
+  banner.hidden = false
+  banner.className = `session-alert ${level}`
+  timer.className = `session-timer ${level}`
+  text.textContent = level === 'urgent'
+    ? 'Falta 1 minuto para encerrar sua sessão'
+    : 'Falta 2 minutos para encerrar sua sessão'
+}
+
+function startSessionTimer(expAtMs: number): void {
+  sessionExpAt = expAtMs
+  const timerText = document.getElementById('sessionTimerText')!
+
+  if (timerInterval) clearInterval(timerInterval)
+
+  function tick(): void {
+    const remaining = sessionExpAt - Date.now()
+    timerText.textContent = formatTime(remaining)
+    if (remaining <= 0) {
+      clearInterval(timerInterval!)
+      window.location.href = '/login'
+      return
+    }
+    if (remaining <= 60_000)       setAlertLevel('urgent')
+    else if (remaining <= 120_000) setAlertLevel('warn')
+    else                           setAlertLevel(null)
+  }
+
+  tick()
+  timerInterval = setInterval(tick, 1000)
+}
+
+async function renewSession(): Promise<void> {
+  const res = await fetch('/api/auth/refresh', { method: 'POST', credentials: 'include' })
+  if (!res.ok) { window.location.href = '/login'; return }
+  const user = await checkAuth()
+  if (user.exp) startSessionTimer(user.exp * 1000)
 }
 
 // ─── Navigation ───────────────────────────────────────────────────────────────
@@ -161,6 +219,9 @@ async function boot(): Promise<void> {
   if (nameEl)   nameEl.textContent   = user.name
   if (emailEl)  emailEl.textContent  = user.login
   if (avatarEl) avatarEl.textContent = user.name.charAt(0).toUpperCase()
+
+  if (user.exp) startSessionTimer(user.exp * 1000)
+  document.getElementById('renewBtn')?.addEventListener('click', renewSession)
 
   document.querySelectorAll<HTMLElement>('.nav-item[data-section]').forEach(link => {
     link.addEventListener('click', e => { e.preventDefault(); navigateTo(link.dataset['section']!) })
