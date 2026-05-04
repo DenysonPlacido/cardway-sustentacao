@@ -52,19 +52,14 @@
         <span>SQL WITH</span>
       </a>
       <div class="nav-section-label">Automações</div>
-      <div class="nav-group" id="navGroupAutomacoes">
-        <button class="nav-item nav-group-toggle" id="automacoesToggle">
-          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-          <span>Automações</span>
-          <svg class="nav-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
-        </button>
-        <div class="nav-group-menu" id="automacoesMenu">
-          <a class="nav-subitem" href="/lancamento">
-            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-            <span>Lançamento</span>
-          </a>
-        </div>
-      </div>
+      <a class="nav-item active" href="/lancamento">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+        <span>Lançamentos</span>
+      </a>
+      <a class="nav-item" href="/home">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+        <span>Atendimento GLPI</span>
+      </a>
     </nav>
     <div class="sidebar-footer">
       <div class="user-row">
@@ -177,13 +172,6 @@
       collapseBtn.addEventListener('click', () => {
         const c = sidebar.classList.toggle('collapsed');
         localStorage.setItem('sidebarCollapsed', c);
-      });
-      const autoToggle  = document.getElementById('automacoesToggle');
-      const autoMenu    = document.getElementById('automacoesMenu');
-      const autoChevron = autoToggle.querySelector('.nav-chevron');
-      autoToggle.addEventListener('click', () => {
-        const open = autoMenu.classList.toggle('open');
-        autoChevron.style.transform = open ? 'rotate(180deg)' : '';
       });
       const overlay = document.getElementById('sidebarOverlay');
       const toggle  = document.getElementById('menuToggle');

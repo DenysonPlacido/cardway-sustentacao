@@ -4,6 +4,7 @@
 :root {
   --sw:       240px;
   --sw-c:     62px;
+  --brand-h:  56px;
   --tn-h:     46px;
   --bg:       #080b11;
   --sidebar:  #060810;
@@ -173,7 +174,7 @@ html, body {
 /* ─────────────────────── TOP NAV ─────────────────────── */
 .top-nav {
   position: fixed;
-  top: 0; left: var(--sw-c); right: 0;
+  top: var(--brand-h); left: var(--sw-c); right: 0;
   height: var(--tn-h);
   z-index: 95;
   background: var(--sidebar);
@@ -206,7 +207,7 @@ html, body {
 .main {
   margin-left: var(--sw);
   flex: 1;
-  padding: calc(var(--tn-h) + 24px) 32px 40px;
+  padding: calc(var(--brand-h) + var(--tn-h) + 24px) 32px 40px;
   overflow-y: auto;
   min-height: 100vh;
   width: calc(100vw - var(--sw));
