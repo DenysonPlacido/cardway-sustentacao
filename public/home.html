@@ -13,13 +13,19 @@
 <body>
 
   <!-- ─── Sidebar ─── -->
-  <aside class="sidebar">
+  <aside class="sidebar collapsed" id="mainSidebar">
     <div class="sidebar-brand">
-      <img src="/cardway-logo-DmLFa68k.svg" alt="Cardway" class="brand-logo" />
-      <div class="brand-text">
-        <span class="brand-name">Sustentação</span>
-        <span class="brand-sub">Cardway</span>
-      </div>
+      <a href="/home" class="brand-link">
+        <img src="/cardway-logo-DmLFa68k.svg" alt="Cardway" class="brand-logo" />
+        <div class="brand-text">
+          <span class="brand-name">Sustentação</span>
+        </div>
+      </a>
+      <button class="sidebar-collapse-btn" id="sidebarCollapseBtn" title="Expandir sidebar">
+        <svg class="collapse-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14">
+          <polyline points="15 18 9 12 15 6"/>
+        </svg>
+      </button>
     </div>
 
     <nav class="sidebar-nav">
@@ -56,15 +62,27 @@
         <span>SQL WITH</span>
       </a>
 
-      <div class="nav-section-label">Em breve</div>
+      <div class="nav-section-label">Automações</div>
 
-      <a class="nav-item disabled" href="#">
-        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
-        </svg>
-        <span>Automações</span>
-        <span class="badge-soon">Em breve</span>
-      </a>
+      <div class="nav-group" id="navGroupAutomacoes">
+        <button class="nav-item nav-group-toggle" id="automacoesToggle">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+          </svg>
+          <span>Automações</span>
+          <svg class="nav-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="6 9 12 15 18 9"/>
+          </svg>
+        </button>
+        <div class="nav-group-menu" id="automacoesMenu">
+          <a class="nav-subitem" href="/lancamento">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+            </svg>
+            <span>Lançamento</span>
+          </a>
+        </div>
+      </div>
     </nav>
 
     <div class="sidebar-footer">
@@ -80,7 +98,7 @@
           <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/>
           <polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
         </svg>
-        Sair
+        <span>Sair</span>
       </button>
     </div>
   </aside>
@@ -145,7 +163,7 @@
             <p>Gera cláusula WITH a partir de colunas e blocos de dados</p>
           </div>
 
-          <div class="card tool-card coming-soon">
+          <div class="card tool-card" onclick="window.location.href='/lancamento'">
             <div class="tool-icon">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
@@ -153,7 +171,6 @@
             </div>
             <h3>Automações</h3>
             <p>Automações para o dia a dia do time de sustentação</p>
-            <span class="badge-soon">Em breve</span>
           </div>
         </div>
       </section>
@@ -262,5 +279,27 @@
   </div>
 
   <script src="/js/home.js"></script>
+  <script>
+    (function () {
+      // Sidebar collapse
+      var sidebar    = document.getElementById('mainSidebar');
+      var collapseBtn = document.getElementById('sidebarCollapseBtn');
+      var saved = localStorage.getItem('sidebarCollapsed');
+      if (saved === 'false') sidebar.classList.remove('collapsed');
+      collapseBtn.addEventListener('click', function () {
+        var c = sidebar.classList.toggle('collapsed');
+        localStorage.setItem('sidebarCollapsed', c);
+      });
+
+      // Automações dropdown
+      var toggle  = document.getElementById('automacoesToggle');
+      var menu    = document.getElementById('automacoesMenu');
+      var chevron = toggle.querySelector('.nav-chevron');
+      toggle.addEventListener('click', function () {
+        var open = menu.classList.toggle('open');
+        chevron.style.transform = open ? 'rotate(180deg)' : '';
+      });
+    })();
+  </script>
 </body>
 </html>
