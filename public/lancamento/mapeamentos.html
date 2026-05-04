@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mapeamentos</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/gerador.css">
+</head>
+<body>
+  <div class="mobile-header">
+    <button class="hamburger" id="menuToggle" aria-label="Menu">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+    <a href="/home"><img src="/cardway-logo-DmLFa68k.svg" alt="Cardway" class="mobile-logo" /></a>
+  </div>
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <aside class="sidebar collapsed" id="mainSidebar">
+    <div class="sidebar-brand">
+      <a href="/home" class="brand-link">
+        <img src="/cardway-logo-DmLFa68k.svg" alt="Cardway" class="brand-logo" />
+        <div class="brand-text">
+          <span class="brand-name">Sustentação</span>
+        </div>
+      </a>
+      <button class="sidebar-collapse-btn" id="sidebarCollapseBtn" title="Expandir sidebar">
+        <svg class="collapse-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14">
+          <polyline points="15 18 9 12 15 6"/>
+        </svg>
+      </button>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Menu</div>
+      <a class="nav-item" href="/home" title="Painel">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        <span>Painel</span>
+      </a>
+      <div class="nav-section-label">Ferramentas</div>
+      <a class="nav-item" href="/home" title="SQL → IN">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 10h16M4 14h10M4 18h6"/></svg>
+        <span>SQL → IN</span>
+      </a>
+      <a class="nav-item" href="/home" title="JSON Identador">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+        <span>JSON Identador</span>
+      </a>
+      <a class="nav-item" href="/home" title="SQL WITH">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+        <span>SQL WITH</span>
+      </a>
+      <div class="nav-section-label">Automações</div>
+      <div class="nav-group" id="navGroupAutomacoes">
+        <button class="nav-item nav-group-toggle" id="automacoesToggle">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+          <span>Automações</span>
+          <svg class="nav-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="nav-group-menu" id="automacoesMenu">
+          <a class="nav-subitem" href="/lancamento">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+            <span>Lançamento</span>
+          </a>
+        </div>
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-row">
+        <div class="user-avatar" id="gUserAvatar">?</div>
+        <div class="user-details"><span class="user-name" id="gUserName">Carregando...</span></div>
+      </div>
+      <button class="btn-logout" id="gLogoutBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        <span>Sair</span>
+      </button>
+    </div>
+  </aside>
+
+  <nav class="top-nav">
+    <a class="top-nav-item" href="/lancamento">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      <span>Dashboard</span>
+    </a>
+    <a class="top-nav-item" href="/lancamento/gerador">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+      <span>Gerador</span>
+    </a>
+    <a class="top-nav-item" href="/lancamento/tipos">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+      <span>Tipos</span>
+    </a>
+    <a class="top-nav-item active" href="/lancamento/mapeamentos">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
+      <span>Mapeamentos</span>
+    </a>
+    <a class="top-nav-item" href="/lancamento/historico">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      <span>Histórico</span>
+    </a>
+  </nav>
+
+  <main class="main">
+    <h2>🗂️ Mapeamentos de Colunas</h2>
+    <p class="page-caption">Configure como as colunas do arquivo importado são identificadas.</p>
+
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="lista">📋 Lista</button>
+      <button class="tab-btn" data-tab="novo">➕ Novo</button>
+      <button class="tab-btn" data-tab="editar">✏️ Editar</button>
+    </div>
+
+    <!-- Lista -->
+    <div class="tab-pane active" id="tab-lista">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+        <label class="checkbox-wrap">
+          <input type="checkbox" id="chk-inativos" onchange="carregarMapeamentos()">
+          <span>Mostrar inativos</span>
+        </label>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th><th>Nome</th><th>Tipo</th><th>Estab.</th><th>Valor</th><th>Ativo</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-map"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Novo -->
+    <div class="tab-pane" id="tab-novo">
+      <div id="alert-novo"></div>
+      <div class="form-group" style="margin-bottom:14px;">
+        <label>Nome *</label>
+        <input type="text" id="n-nome" placeholder="ex: Planilha Padrão">
+      </div>
+
+      <div class="toggle-wrap" style="margin-bottom:14px;">
+        <label class="toggle">
+          <input type="checkbox" id="n-usar-idx" onchange="toggleModoNovo()">
+          <span class="toggle-slider"></span>
+        </label>
+        <span id="n-modo-label">Mapear por nome de coluna</span>
+      </div>
+
+      <div id="n-por-nome">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Coluna Estabelecimento</label>
+            <input type="text" id="n-col-estab" placeholder="ex: Código do Estab">
+          </div>
+          <div class="form-group">
+            <label>Coluna Valor</label>
+            <input type="text" id="n-col-valor" placeholder="ex: Valor do Crédito">
+          </div>
+        </div>
+      </div>
+
+      <div id="n-por-idx" style="display:none;">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Índice Estabelecimento (0-based)</label>
+            <input type="number" id="n-idx-estab" value="0" min="0">
+          </div>
+          <div class="form-group">
+            <label>Índice Valor (0-based)</label>
+            <input type="number" id="n-idx-valor" value="1" min="0">
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-top:14px;">
+        <label>Descrição (opcional)</label>
+        <textarea id="n-desc" rows="2"></textarea>
+      </div>
+
+      <div class="form-actions">
+        <button class="btn btn-primary" onclick="criarMapeamento()">💾 Salvar</button>
+      </div>
+    </div>
+
+    <!-- Editar -->
+    <div class="tab-pane" id="tab-editar">
+      <div id="alert-edit"></div>
+      <div class="form-group" style="margin-bottom:14px;">
+        <label>Selecione o mapeamento</label>
+        <select id="e-sel" onchange="preencherEdit()"></select>
+      </div>
+
+      <div id="edit-form" style="display:none;">
+        <div class="form-group" style="margin-bottom:14px;">
+          <label>Nome *</label>
+          <input type="text" id="e-nome">
+        </div>
+
+        <div class="toggle-wrap" style="margin-bottom:14px;">
+          <label class="toggle">
+            <input type="checkbox" id="e-usar-idx" onchange="toggleModoEdit()">
+            <span class="toggle-slider"></span>
+          </label>
+          <span id="e-modo-label">Mapear por nome de coluna</span>
+        </div>
+
+        <div id="e-por-nome">
+          <div class="form-grid">
+            <div class="form-group"><label>Coluna Estabelecimento</label><input type="text" id="e-col-estab"></div>
+            <div class="form-group"><label>Coluna Valor</label><input type="text" id="e-col-valor"></div>
+          </div>
+        </div>
+
+        <div id="e-por-idx" style="display:none;">
+          <div class="form-grid">
+            <div class="form-group"><label>Índice Estabelecimento</label><input type="number" id="e-idx-estab" min="0"></div>
+            <div class="form-group"><label>Índice Valor</label><input type="number" id="e-idx-valor" min="0"></div>
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-top:14px;">
+          <label>Descrição</label>
+          <textarea id="e-desc" rows="2"></textarea>
+        </div>
+        <label class="checkbox-wrap" style="margin-top:14px;">
+          <input type="checkbox" id="e-ativo"> <span>Ativo</span>
+        </label>
+
+        <div class="form-actions">
+          <button class="btn btn-primary" onclick="salvarEdit()">💾 Atualizar</button>
+          <button class="btn btn-danger" onclick="desativarMap()">🗑️ Desativar</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="/js/lancamento/mapeamentos.js"></script>
+  <script>
+    (async () => {
+      try {
+        const r = await fetch('/api/auth/me');
+        if (!r.ok) { window.location.href = '/login'; return; }
+        const { user } = await r.json();
+        const name = user.name || user.login;
+        document.getElementById('gUserName').textContent = name;
+        document.getElementById('gUserAvatar').textContent = name.charAt(0).toUpperCase();
+      } catch { window.location.href = '/login'; }
+      document.getElementById('gLogoutBtn').addEventListener('click', async () => {
+        await fetch('/api/auth/logout', { method: 'POST' });
+        window.location.href = '/login';
+      });
+      const sidebar     = document.getElementById('mainSidebar');
+      const collapseBtn = document.getElementById('sidebarCollapseBtn');
+      const saved = localStorage.getItem('sidebarCollapsed');
+      if (saved === 'false') sidebar.classList.remove('collapsed');
+      collapseBtn.addEventListener('click', () => {
+        const c = sidebar.classList.toggle('collapsed');
+        localStorage.setItem('sidebarCollapsed', c);
+      });
+      const autoToggle  = document.getElementById('automacoesToggle');
+      const autoMenu    = document.getElementById('automacoesMenu');
+      const autoChevron = autoToggle.querySelector('.nav-chevron');
+      autoToggle.addEventListener('click', () => {
+        const open = autoMenu.classList.toggle('open');
+        autoChevron.style.transform = open ? 'rotate(180deg)' : '';
+      });
+      const overlay = document.getElementById('sidebarOverlay');
+      const toggle  = document.getElementById('menuToggle');
+      function openMenu()  { sidebar.classList.add('open');    overlay?.classList.add('visible'); }
+      function closeMenu() { sidebar.classList.remove('open'); overlay?.classList.remove('visible'); }
+      toggle?.addEventListener('click', () => sidebar.classList.contains('open') ? closeMenu() : openMenu());
+      overlay?.addEventListener('click', closeMenu);
+    })();
+  </script>
+</body>
+</html>

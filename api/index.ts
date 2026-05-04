@@ -6,6 +6,8 @@ import bcrypt from 'bcryptjs'
 import path from 'path'
 import { Pool } from 'pg'
 import automacaoRouter from './automation-routes'
+import { createGeradorDb } from './gerador/db'
+import { createGeradorRouter } from './gerador/routes'
 
 const app = express()
 const PUBLIC_DIR = path.join(__dirname, '..', 'public')
@@ -36,6 +38,9 @@ const dbSetupPromise = setupDb().then(() => true).catch((error: unknown) => {
   console.error('Database setup failed:', error)
   return false
 })
+
+const geradorDb = createGeradorDb(db)
+const geradorRouter = createGeradorRouter(geradorDb)
 
 app.use(express.json())
 app.use(cookieParser())
@@ -121,6 +126,84 @@ async function setupDb(): Promise<void> {
     await db.query(`UPDATE users SET login = COALESCE(login, email) WHERE login IS NULL AND COALESCE(email, '') <> ''`)
   }
   await db.query(`CREATE UNIQUE INDEX IF NOT EXISTS users_login_key ON users (login)`)
+
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS tipos_transacao (
+      id SERIAL PRIMARY KEY,
+      nome TEXT NOT NULL,
+      tipo_transacao_id INTEGER NOT NULL,
+      natureza INTEGER NOT NULL DEFAULT 0,
+      modalidade INTEGER NOT NULL DEFAULT 1,
+      impacto_limite INTEGER NOT NULL DEFAULT 0,
+      envia_fila INTEGER NOT NULL DEFAULT 1,
+      canal_venda INTEGER NOT NULL DEFAULT 1,
+      quantidade INTEGER NOT NULL DEFAULT 1,
+      descricao TEXT,
+      ativo BOOLEAN NOT NULL DEFAULT TRUE,
+      criado_em TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      atualizado_em TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `)
+
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS mapeamentos_colunas (
+      id SERIAL PRIMARY KEY,
+      nome TEXT NOT NULL,
+      coluna_estabelecimento TEXT,
+      coluna_valor TEXT,
+      indice_estabelecimento INTEGER,
+      indice_valor INTEGER,
+      usar_indice BOOLEAN NOT NULL DEFAULT FALSE,
+      descricao TEXT,
+      ativo BOOLEAN NOT NULL DEFAULT TRUE,
+      criado_em TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `)
+
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS historico_lancamentos (
+      id SERIAL PRIMARY KEY,
+      glpi TEXT,
+      nome_campanha TEXT,
+      dados_complementares TEXT,
+      tipo_transacao_id_val INTEGER,
+      natureza INTEGER,
+      modalidade INTEGER,
+      impacto_limite INTEGER,
+      envia_fila INTEGER,
+      canal_venda INTEGER,
+      quantidade INTEGER,
+      total_registros INTEGER,
+      valor_total NUMERIC(15,2),
+      sql_gerado TEXT,
+      mapeamento_usado TEXT,
+      criado_em TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `)
+
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS tipos_transacao_sistema (
+      id INTEGER PRIMARY KEY,
+      nome TEXT,
+      descricao TEXT,
+      impacto_limite INTEGER,
+      modalidade INTEGER,
+      natureza INTEGER,
+      reversiva INTEGER,
+      origem INTEGER,
+      ativo INTEGER,
+      data_inclusao TEXT,
+      usuario_inclusao TEXT,
+      data_alteracao TEXT,
+      usuario_alteracao TEXT,
+      versao_registro INTEGER,
+      sig_flg INTEGER,
+      host_flg INTEGER,
+      gera_recebivel INTEGER,
+      envia_fila INTEGER,
+      agrupador INTEGER
+    )
+  `)
 
   if (process.env.NODE_ENV !== 'production') {
     for (const user of getSeedUsers()) {
@@ -320,6 +403,30 @@ app.post('/api/admin/users', async (req: Request, res: Response): Promise<void> 
 })
 
 app.use('/api/automacao', authMiddleware, automacaoRouter)
+app.use('/api', authMiddleware, geradorRouter)
+
+const LANCAMENTO_DIR = path.join(PUBLIC_DIR, 'lancamento')
+const LANCAMENTO_PAGES: Record<string, string> = {
+  '/lancamento': 'index.html',
+  '/lancamento/gerador': 'gerador.html',
+  '/lancamento/tipos': 'tipos.html',
+  '/lancamento/mapeamentos': 'mapeamentos.html',
+  '/lancamento/historico': 'historico.html',
+}
+
+for (const [route, file] of Object.entries(LANCAMENTO_PAGES)) {
+  app.get(route, (req: Request, res: Response): void => {
+    const token = req.cookies?.['token'] as string | undefined
+    if (!token) { res.redirect('/login'); return }
+    try {
+      jwt.verify(token, JWT_SECRET)
+      res.sendFile(path.join(LANCAMENTO_DIR, file))
+    } catch {
+      res.clearCookie('token')
+      res.redirect('/login')
+    }
+  })
+}
 
 app.get('/', (_req: Request, res: Response): void => {
   res.redirect('/login')
