@@ -73,6 +73,14 @@
     </div>
   </aside>
 
+  <header class="page-header">
+    <span class="ph-title">Tipos de Transação</span>
+    <div class="session-timer" id="sessionTimer">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      <span id="sessionTimerText">--:--</span>
+    </div>
+  </header>
+
   <nav class="top-nav">
     <a class="top-nav-item" href="/lancamento">
       <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
@@ -244,6 +252,23 @@
         const name = user.name || user.login;
         document.getElementById('gUserName').textContent = name;
         document.getElementById('gUserAvatar').textContent = name.charAt(0).toUpperCase();
+        if (user.exp) {
+          const expMs = user.exp * 1000;
+          const timerEl = document.getElementById('sessionTimerText');
+          const timerWrap = document.getElementById('sessionTimer');
+          function fmtTime(ms) {
+            if (ms <= 0) return '00:00';
+            const s = Math.floor(ms / 1000), m = Math.floor(s / 60), h = Math.floor(m / 60);
+            return h > 0 ? `${h}:${String(m%60).padStart(2,'0')}:${String(s%60).padStart(2,'0')}` : `${String(m).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
+          }
+          function tick() {
+            const rem = expMs - Date.now();
+            timerEl.textContent = fmtTime(rem);
+            timerWrap.className = rem <= 60000 ? 'session-timer urgent' : rem <= 120000 ? 'session-timer warning' : 'session-timer';
+            if (rem <= 0) { window.location.href = '/login'; }
+          }
+          tick(); setInterval(tick, 1000);
+        }
       } catch { window.location.href = '/login'; }
       document.getElementById('gLogoutBtn').addEventListener('click', async () => {
         await fetch('/api/auth/logout', { method: 'POST' });
