@@ -81,6 +81,12 @@
             </svg>
             <span>Lançamento</span>
           </a>
+          <a class="nav-subitem" data-section="automacoes" href="#">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+            </svg>
+            <span>Atendimento GLPI</span>
+          </a>
         </div>
       </div>
     </nav>
@@ -163,14 +169,14 @@
             <p>Gera cláusula WITH a partir de colunas e blocos de dados</p>
           </div>
 
-          <div class="card tool-card" onclick="window.location.href='/lancamento'">
+          <div class="card tool-card" data-section="automacoes">
             <div class="tool-icon">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
               </svg>
             </div>
-            <h3>Automações</h3>
-            <p>Automações para o dia a dia do time de sustentação</p>
+            <h3>Atendimento GLPI</h3>
+            <p>Visualize e gerencie chamados abertos com suporte de IA</p>
           </div>
         </div>
       </section>
@@ -272,6 +278,62 @@
             </div>
             <pre class="result-pre" id="withResultPre"></pre>
           </div>
+        </div>
+      </section>
+
+      <!-- Atendimento GLPI -->
+      <section id="section-automacoes" class="section hidden">
+        <div class="automacoes-header">
+          <div>
+            <h2 class="automacoes-title">Atendimento GLPI</h2>
+            <p class="automacoes-sub">Chamados abertos monitorados em tempo real</p>
+          </div>
+          <div class="automacoes-controls">
+            <select id="glpiStatusFilter" class="glpi-select">
+              <option value="">Todos os status</option>
+              <option value="1" selected>Novo</option>
+              <option value="2">Em atendimento (atribuído)</option>
+              <option value="3">Em atendimento (planejado)</option>
+              <option value="4">Pendente</option>
+              <option value="5">Resolvido</option>
+            </select>
+            <button class="btn btn-ghost" id="glpiRefreshBtn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13">
+                <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
+                <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/>
+              </svg>
+              Atualizar
+            </button>
+          </div>
+        </div>
+
+        <div id="glpiError" class="error-inline hidden"></div>
+
+        <div id="glpiLoading" class="glpi-loading hidden">
+          <div class="glpi-spinner"></div>
+          <span>Buscando chamados no GLPI...</span>
+        </div>
+
+        <div id="glpiEmpty" class="glpi-empty hidden">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="36" height="36">
+            <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          <p>Nenhum chamado encontrado para o filtro selecionado</p>
+        </div>
+
+        <div class="glpi-table-wrap" id="glpiTableWrap">
+          <table class="glpi-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Título</th>
+                <th>Status</th>
+                <th>Prioridade</th>
+                <th>Aberto em</th>
+              </tr>
+            </thead>
+            <tbody id="glpiTableBody"></tbody>
+          </table>
         </div>
       </section>
 

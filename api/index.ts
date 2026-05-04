@@ -5,6 +5,7 @@ import jwt from 'jsonwebtoken'
 import bcrypt from 'bcryptjs'
 import path from 'path'
 import { Pool } from 'pg'
+import automacaoRouter from './automation-routes'
 import { createGeradorDb } from './gerador/db'
 import { createGeradorRouter } from './gerador/routes'
 
@@ -401,6 +402,7 @@ app.post('/api/admin/users', async (req: Request, res: Response): Promise<void> 
   }
 })
 
+app.use('/api/automacao', authMiddleware, automacaoRouter)
 app.use('/api', authMiddleware, geradorRouter)
 
 const LANCAMENTO_DIR = path.join(PUBLIC_DIR, 'lancamento')
