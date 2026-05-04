@@ -5,6 +5,7 @@ import jwt from 'jsonwebtoken'
 import bcrypt from 'bcryptjs'
 import path from 'path'
 import { Pool } from 'pg'
+import automacaoRouter from './automation-routes'
 
 const app = express()
 const PUBLIC_DIR = path.join(__dirname, '..', 'public')
@@ -317,6 +318,8 @@ app.post('/api/admin/users', async (req: Request, res: Response): Promise<void> 
     res.status(400).json({ error: message })
   }
 })
+
+app.use('/api/automacao', authMiddleware, automacaoRouter)
 
 app.get('/', (_req: Request, res: Response): void => {
   res.redirect('/login')

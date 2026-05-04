@@ -5,6 +5,7 @@ const TITLES: Record<string, string> = {
   'sql-concat':  'SQL → IN',
   'json-format': 'JSON Identador',
   'sql-with':    'SQL WITH',
+  automacoes:    'Atendimento GLPI',
 }
 
 let activeSection = 'painel'
@@ -197,6 +198,100 @@ function initWithTool(): void {
   )
 }
 
+// ─── Atendimento GLPI ─────────────────────────────────────────────────────────
+
+interface GlpiTicket {
+  id: number
+  name: string
+  statusLabel: string
+  priority: number
+  priorityLabel: string
+  date: string
+}
+
+const PRIORITY_CLASS: Record<number, string> = {
+  1: 'priority-low', 2: 'priority-low',
+  3: 'priority-medium',
+  4: 'priority-high', 5: 'priority-high', 6: 'priority-urgent',
+}
+
+function formatGlpiDate(raw: string): string {
+  if (!raw) return '—'
+  const d = new Date(raw.replace(' ', 'T'))
+  if (isNaN(d.getTime())) return raw
+  return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+}
+
+function renderTickets(tickets: GlpiTicket[]): void {
+  const tbody  = document.getElementById('glpiTableBody')!
+  const wrap   = document.getElementById('glpiTableWrap')!
+  const empty  = document.getElementById('glpiEmpty')!
+
+  tbody.innerHTML = ''
+
+  if (!tickets.length) {
+    wrap.classList.add('hidden')
+    empty.classList.remove('hidden')
+    return
+  }
+
+  empty.classList.add('hidden')
+  wrap.classList.remove('hidden')
+
+  tickets.forEach(t => {
+    const tr = document.createElement('tr')
+    tr.innerHTML = `
+      <td class="glpi-id">#${t.id}</td>
+      <td class="glpi-name">${escapeHtml(t.name)}</td>
+      <td><span class="glpi-status-badge">${escapeHtml(t.statusLabel)}</span></td>
+      <td><span class="glpi-priority-badge ${PRIORITY_CLASS[t.priority] ?? ''}">${escapeHtml(t.priorityLabel)}</span></td>
+      <td class="glpi-date">${formatGlpiDate(t.date)}</td>
+    `
+    tbody.appendChild(tr)
+  })
+}
+
+function escapeHtml(str: string): string {
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+}
+
+async function fetchGlpiTickets(): Promise<void> {
+  const loading = document.getElementById('glpiLoading')!
+  const errorEl = document.getElementById('glpiError')!
+  const wrap    = document.getElementById('glpiTableWrap')!
+  const empty   = document.getElementById('glpiEmpty')!
+  const filter  = document.getElementById('glpiStatusFilter') as HTMLSelectElement
+
+  errorEl.classList.add('hidden')
+  wrap.classList.add('hidden')
+  empty.classList.add('hidden')
+  loading.classList.remove('hidden')
+
+  try {
+    const status = filter.value
+    const url = `/api/automacao/tickets${status ? `?status=${status}` : ''}`
+    const res = await fetch(url, { credentials: 'include' })
+
+    if (!res.ok) {
+      const data = await res.json() as { error?: string }
+      throw new Error(data.error ?? `Erro ${res.status}`)
+    }
+
+    const data = await res.json() as { tickets: GlpiTicket[] }
+    renderTickets(data.tickets)
+  } catch (err) {
+    errorEl.textContent = err instanceof Error ? err.message : 'Erro ao buscar chamados'
+    errorEl.classList.remove('hidden')
+  } finally {
+    loading.classList.add('hidden')
+  }
+}
+
+function initGlpiTool(): void {
+  document.getElementById('glpiRefreshBtn')!.addEventListener('click', fetchGlpiTickets)
+  document.getElementById('glpiStatusFilter')!.addEventListener('change', fetchGlpiTickets)
+}
+
 // ─── Util ─────────────────────────────────────────────────────────────────────
 
 async function copyText(text: string, btn: HTMLButtonElement): Promise<void> {
@@ -224,16 +319,26 @@ async function boot(): Promise<void> {
   document.getElementById('renewBtn')?.addEventListener('click', renewSession)
 
   document.querySelectorAll<HTMLElement>('.nav-item[data-section]').forEach(link => {
-    link.addEventListener('click', e => { e.preventDefault(); navigateTo(link.dataset['section']!) })
+    link.addEventListener('click', e => {
+      e.preventDefault()
+      const section = link.dataset['section']!
+      navigateTo(section)
+      if (section === 'automacoes') fetchGlpiTickets()
+    })
   })
   document.querySelectorAll<HTMLElement>('.tool-card[data-section]').forEach(card => {
-    card.addEventListener('click', () => navigateTo(card.dataset['section']!))
+    card.addEventListener('click', () => {
+      const section = card.dataset['section']!
+      navigateTo(section)
+      if (section === 'automacoes') fetchGlpiTickets()
+    })
   })
   document.getElementById('logoutBtn')!.addEventListener('click', logout)
 
   initSqlTool()
   initJsonTool()
   initWithTool()
+  initGlpiTool()
 }
 
 boot().catch(console.error)
