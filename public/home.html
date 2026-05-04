@@ -270,58 +270,113 @@
 
       <!-- Atendimento GLPI -->
       <section id="section-automacoes" class="section hidden">
-        <div class="automacoes-header">
-          <div>
-            <h2 class="automacoes-title">Atendimento GLPI</h2>
-            <p class="automacoes-sub">Chamados abertos monitorados em tempo real</p>
+
+        <!-- Tabs -->
+        <div class="glpi-tabs">
+          <button class="glpi-tab active" data-tab="chamados">Chamados</button>
+          <button class="glpi-tab" data-tab="agente">Agente IA</button>
+        </div>
+
+        <!-- ── Tab: Chamados ── -->
+        <div id="tab-chamados">
+          <div class="automacoes-header">
+            <div>
+              <h2 class="automacoes-title">Chamados GLPI</h2>
+              <p class="automacoes-sub">Chamados abertos monitorados em tempo real</p>
+            </div>
+            <div class="automacoes-controls">
+              <select id="glpiStatusFilter" class="glpi-select">
+                <option value="">Todos os status</option>
+                <option value="1" selected>Novo</option>
+                <option value="2">Em atendimento (atribuído)</option>
+                <option value="3">Em atendimento (planejado)</option>
+                <option value="4">Pendente</option>
+                <option value="5">Resolvido</option>
+              </select>
+              <select id="glpiAssignedFilter" class="glpi-select">
+                <option value="">Todos os técnicos</option>
+              </select>
+              <button class="btn btn-ghost" id="glpiRefreshBtn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13">
+                  <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
+                  <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/>
+                </svg>
+                Atualizar
+              </button>
+            </div>
           </div>
-          <div class="automacoes-controls">
-            <select id="glpiStatusFilter" class="glpi-select">
-              <option value="">Todos os status</option>
-              <option value="1" selected>Novo</option>
-              <option value="2">Em atendimento (atribuído)</option>
-              <option value="3">Em atendimento (planejado)</option>
-              <option value="4">Pendente</option>
-              <option value="5">Resolvido</option>
-            </select>
-            <button class="btn btn-ghost" id="glpiRefreshBtn">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13">
-                <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
-                <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/>
-              </svg>
-              Atualizar
-            </button>
+          <div id="glpiError" class="error-inline hidden"></div>
+          <div id="glpiLoading" class="glpi-loading hidden">
+            <div class="glpi-spinner"></div>
+            <span>Buscando chamados no GLPI...</span>
+          </div>
+          <div id="glpiEmpty" class="glpi-empty hidden">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="36" height="36">
+              <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <p>Nenhum chamado encontrado para o filtro selecionado</p>
+          </div>
+          <div class="glpi-table-wrap" id="glpiTableWrap">
+            <table class="glpi-table">
+              <thead>
+                <tr><th>#</th><th>Título</th><th>Status</th><th>Prioridade</th><th>Aberto em</th></tr>
+              </thead>
+              <tbody id="glpiTableBody"></tbody>
+            </table>
           </div>
         </div>
 
-        <div id="glpiError" class="error-inline hidden"></div>
+        <!-- ── Tab: Agente IA ── -->
+        <div id="tab-agente" hidden>
+          <div class="agent-header">
+            <div>
+              <h2 class="agent-title">Agente de Sustentação IA</h2>
+              <p class="agent-sub">Claude analisa cada chamado e sugere ações em tempo real</p>
+            </div>
+            <div class="agent-controls">
+              <select id="agentStatusFilter" class="glpi-select">
+                <option value="1" selected>Novo</option>
+                <option value="2">Em atendimento (atribuído)</option>
+                <option value="4">Pendente</option>
+                <option value="">Todos</option>
+              </select>
+              <button class="btn btn-primary" id="agentRunBtn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13">
+                  <polygon points="5 3 19 12 5 21 5 3"/>
+                </svg>
+                Rodar Agente
+              </button>
+              <button class="btn btn-ghost" id="agentStopBtn" disabled>Parar</button>
+            </div>
+          </div>
 
-        <div id="glpiLoading" class="glpi-loading hidden">
-          <div class="glpi-spinner"></div>
-          <span>Buscando chamados no GLPI...</span>
+          <div class="agent-layout">
+            <!-- Terminal -->
+            <div class="agent-terminal-card">
+              <div class="agent-terminal-bar">
+                <div class="agent-dots">
+                  <span class="agent-dot" style="background:#ff5f57"></span>
+                  <span class="agent-dot" style="background:#febc2e"></span>
+                  <span class="agent-dot" style="background:#28c840"></span>
+                </div>
+                <span class="agent-bar-title">Claude — Sustentação Engine</span>
+              </div>
+              <div class="agent-terminal" id="agentTerminal">
+                <div id="agentTerminalBody">
+                  <span class="agent-line dim">Aguardando início do agente...</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Results -->
+            <div class="agent-results-card">
+              <div class="agent-results-hdr">Chamados Analisados</div>
+              <div id="agentResultsEmpty" class="agent-results-empty">Nenhum chamado analisado ainda</div>
+              <div id="agentResultsList"></div>
+            </div>
+          </div>
         </div>
 
-        <div id="glpiEmpty" class="glpi-empty hidden">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="36" height="36">
-            <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-          </svg>
-          <p>Nenhum chamado encontrado para o filtro selecionado</p>
-        </div>
-
-        <div class="glpi-table-wrap" id="glpiTableWrap">
-          <table class="glpi-table">
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Título</th>
-                <th>Status</th>
-                <th>Prioridade</th>
-                <th>Aberto em</th>
-              </tr>
-            </thead>
-            <tbody id="glpiTableBody"></tbody>
-          </table>
-        </div>
       </section>
 
     </main>
@@ -344,6 +399,70 @@
       <div class="reauth-actions">
         <button id="ra-confirm" class="btn-reauth-ok">Entrar</button>
         <button id="ra-cancel" class="btn-reauth-cancel">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── Ticket Drawer ─── -->
+  <div id="ticketDrawer" hidden>
+    <div class="ticket-drawer-overlay" id="ticketDrawerOverlay"></div>
+    <div class="ticket-drawer-panel">
+      <div class="ticket-drawer-header">
+        <div>
+          <div class="ticket-drawer-id" id="drawerTicketId"></div>
+          <div class="ticket-drawer-title" id="drawerTicketTitle"></div>
+        </div>
+        <button class="ticket-drawer-close" id="ticketDrawerClose" title="Fechar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <div class="ticket-drawer-meta" id="drawerTicketMeta"></div>
+      <div class="ticket-drawer-body">
+        <div class="ai-timeline" id="aiTimeline"></div>
+        <div id="aiAnalysisResult" hidden class="ai-analysis-card">
+          <div class="ai-analysis-row">
+            <div class="ai-analysis-label">Tipo</div>
+            <div class="ai-analysis-value" id="aiTipo"></div>
+          </div>
+          <div class="ai-analysis-row">
+            <div class="ai-analysis-label">Análise</div>
+            <div class="ai-analysis-value" id="aiAnalise"></div>
+          </div>
+          <div class="ai-analysis-row">
+            <div class="ai-analysis-label">Ação Sugerida</div>
+            <div class="ai-analysis-value" id="aiAcao"></div>
+          </div>
+          <div class="ai-analysis-row">
+            <div class="ai-analysis-label">Risco</div>
+            <div class="ai-analysis-value" id="aiRisco"></div>
+          </div>
+          <div class="ai-analysis-row">
+            <div class="ai-analysis-label">Confiança</div>
+            <div class="ai-analysis-value" id="aiConfianca"></div>
+          </div>
+        </div>
+        <div id="aiApprovalSection" hidden class="ai-approval-section">
+          <p class="ai-approval-label">Ação sugerida pela IA aguarda aprovação do analista:</p>
+          <div class="ai-approval-actions">
+            <button class="btn-success" id="approveBtn">Aprovar e Executar</button>
+            <button class="btn-danger" id="assumeBtn">Assumir manualmente</button>
+          </div>
+          <div id="feedbackSection" hidden class="ai-feedback-section">
+            <label for="feedbackInput">O que a IA deveria ter feito?</label>
+            <textarea id="feedbackInput" rows="3" placeholder="Descreva a ação correta para que a IA aprenda..."></textarea>
+            <button class="btn btn-ghost" id="feedbackSubmitBtn">Enviar feedback</button>
+          </div>
+        </div>
+      </div>
+      <div class="ticket-drawer-footer">
+        <button class="btn btn-primary" id="drawerAnalyzeBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13">
+            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+          </svg>
+          Analisar com IA
+        </button>
       </div>
     </div>
   </div>

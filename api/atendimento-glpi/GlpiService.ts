@@ -15,13 +15,10 @@ export class GlpiService {
   private appToken: string = process.env.GLPI_APP_TOKEN ?? '';
 
   constructor() {
-    this.api = axios.create({
-      baseURL: 'https://suporte.cardway.net.br/apirest.php',
-      headers: {
-        'App-Token': this.appToken,
-        'Content-Type': 'application/json'
-      }
-    });
+    const baseURL = process.env.GLPI_API_URL ?? 'https://suporte.cardway.net.br/apirest.php'
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+    if (this.appToken) headers['App-Token'] = this.appToken
+    this.api = axios.create({ baseURL, headers });
   }
 
   /**
@@ -82,6 +79,42 @@ export class GlpiService {
       console.log(`Acompanhamento adicionado ao ticket #${ticketId}`);
     } catch (error) {
       console.error(`Erro ao postar acompanhamento no ticket ${ticketId}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Responde ao chamado com um follow-up público.
+   */
+  async replyToTicket(ticketId: number, content: string, isPrivate = false): Promise<void> {
+    try {
+      await this.api.post(`/Ticket/${ticketId}/ITILFollowup`, {
+        input: {
+          tickets_id: ticketId,
+          content: content,
+          is_private: isPrivate ? 1 : 0
+        }
+      });
+      console.log(`Resposta adicionada ao ticket #${ticketId}`);
+    } catch (error) {
+      console.error(`Erro ao responder o ticket ${ticketId}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Atualiza campos básicos do chamado no GLPI.
+   */
+  async updateTicket(ticketId: number, data: { name?: string; content?: string }): Promise<void> {
+    try {
+      const input: Record<string, unknown> = { id: ticketId };
+      if (data.name !== undefined) input.name = data.name;
+      if (data.content !== undefined) input.content = data.content;
+
+      await this.api.put(`/Ticket/${ticketId}`, { input });
+      console.log(`Ticket #${ticketId} atualizado`);
+    } catch (error) {
+      console.error(`Erro ao atualizar o ticket ${ticketId}:`, error);
       throw error;
     }
   }

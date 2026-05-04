@@ -12,7 +12,7 @@ export class SustentacaoEngine {
 
   constructor() {
     this.glpi = new GlpiService();
-    this.ai = new AiService(process.env.ANTHROPIC_API_KEY || '');
+    this.ai = new AiService(process.env.GEMINI_API_KEY || '');
   }
 
   async run(entityId: number) {

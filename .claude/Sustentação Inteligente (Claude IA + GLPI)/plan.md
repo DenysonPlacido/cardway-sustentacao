@@ -4,7 +4,7 @@
 - [ ] Configuração do ambiente TypeScript e instanciacão do Axios para API GLPI.
 - [ ] Implementar `GlpiClient`:
     - Métodos para `initSession`, `listTickets` e `addITILFollowup`.
-- [ ] Validar acesso com o Token: `A5DJPMbDT7CMbpo5OZS1Pc6UdL20IZYMi0waheM2`.
+- [ ] Validar acesso com o Token: `exemplo`.
 
 ## Fase 2: Inteligência e Aprendizado (Semana 2)
 - [ ] Criar a "Base de Conhecimento" em arquivos `.md` que a IA usará como referência.
