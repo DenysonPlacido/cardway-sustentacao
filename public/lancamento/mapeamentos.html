@@ -249,21 +249,52 @@
         document.getElementById('gUserName').textContent = name;
         document.getElementById('gUserAvatar').textContent = name.charAt(0).toUpperCase();
         if (user.exp) {
-          const expMs = user.exp * 1000;
           const timerEl = document.getElementById('sessionTimerText');
           const timerWrap = document.getElementById('sessionTimer');
+          const modal = document.getElementById('reauth-modal');
+          const raError = document.getElementById('ra-error');
+          let expMs = user.exp * 1000;
+          let interval;
           function fmtTime(ms) {
             if (ms <= 0) return '00:00';
             const s = Math.floor(ms / 1000), m = Math.floor(s / 60), h = Math.floor(m / 60);
             return h > 0 ? `${h}:${String(m%60).padStart(2,'0')}:${String(s%60).padStart(2,'0')}` : `${String(m).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
           }
+          function showReauth() {
+            clearInterval(interval);
+            timerEl.textContent = '00:00';
+            timerWrap.className = 'session-timer urgent';
+            modal.hidden = false;
+            document.getElementById('ra-login').focus();
+          }
           function tick() {
             const rem = expMs - Date.now();
+            if (rem <= 0) { showReauth(); return; }
             timerEl.textContent = fmtTime(rem);
             timerWrap.className = rem <= 60000 ? 'session-timer urgent' : rem <= 120000 ? 'session-timer warning' : 'session-timer';
-            if (rem <= 0) { window.location.href = '/login'; }
           }
-          tick(); setInterval(tick, 1000);
+          tick(); interval = setInterval(tick, 1000);
+          document.getElementById('ra-confirm').addEventListener('click', async () => {
+            const login = document.getElementById('ra-login').value.trim();
+            const senha = document.getElementById('ra-senha').value;
+            raError.hidden = true;
+            if (!login || !senha) { raError.textContent = 'Preencha login e senha.'; raError.hidden = false; return; }
+            try {
+              const res = await fetch('/api/auth/login', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ login, password: senha }) });
+              if (!res.ok) { raError.textContent = 'Credenciais inválidas.'; raError.hidden = false; return; }
+              const me = await fetch('/api/auth/me');
+              if (!me.ok) { window.location.href = '/login'; return; }
+              const { user: u } = await me.json();
+              expMs = u.exp * 1000;
+              modal.hidden = true;
+              document.getElementById('ra-login').value = '';
+              document.getElementById('ra-senha').value = '';
+              tick(); interval = setInterval(tick, 1000);
+            } catch { raError.textContent = 'Erro de conexão.'; raError.hidden = false; }
+          });
+          document.getElementById('ra-login').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('ra-senha').focus(); });
+          document.getElementById('ra-senha').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('ra-confirm').click(); });
+          document.getElementById('ra-cancel').addEventListener('click', () => { window.location.href = '/login'; });
         }
       } catch { window.location.href = '/login'; }
       document.getElementById('gLogoutBtn').addEventListener('click', async () => {
@@ -286,5 +317,24 @@
       overlay?.addEventListener('click', closeMenu);
     })();
   </script>
+  <div id="reauth-modal" hidden class="reauth-overlay">
+    <div class="reauth-box">
+      <p class="reauth-title">Sessão encerrada</p>
+      <p class="reauth-desc">Insira suas credenciais para continuar sem perder o trabalho.</p>
+      <div class="form-group" style="margin-bottom:14px;">
+        <label>Login</label>
+        <input type="text" id="ra-login" autocomplete="username" placeholder="seu login">
+      </div>
+      <div class="form-group">
+        <label>Senha</label>
+        <input type="password" id="ra-senha" autocomplete="current-password" placeholder="••••••••">
+      </div>
+      <div id="ra-error" hidden class="reauth-error"></div>
+      <div class="reauth-actions">
+        <button id="ra-confirm" class="btn-reauth-ok">Entrar</button>
+        <button id="ra-cancel" class="btn-reauth-cancel">Cancelar</button>
+      </div>
+    </div>
+  </div>
 </body>
 </html>

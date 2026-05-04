@@ -9,9 +9,11 @@
     "db:seed": "node scripts/setup-db.js"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.92.0",
+    "axios": "^1.6.0",
     "bcryptjs": "^2.4.3",
     "cookie-parser": "^1.4.6",
-    "dotenv": "^16.3.1",
+    "dotenv": "^16.6.1",
     "express": "^4.18.2",
     "jsonwebtoken": "^9.0.2",
     "multer": "^1.4.5-lts.1",
@@ -26,7 +28,7 @@
     "@types/multer": "^1.4.11",
     "@types/node": "^20.11.0",
     "@types/pg": "^8.11.0",
-    "esbuild": "^0.20.0",
+    "esbuild": "^0.28.0",
     "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.3.3"

@@ -62,7 +62,7 @@ function startSessionTimer(expAtMs: number): void {
     timerText.textContent = formatTime(remaining)
     if (remaining <= 0) {
       clearInterval(timerInterval!)
-      window.location.href = '/login'
+      showReauthModal()
       return
     }
     if (remaining <= 60_000)       setAlertLevel('urgent')
@@ -74,11 +74,22 @@ function startSessionTimer(expAtMs: number): void {
   timerInterval = setInterval(tick, 1000)
 }
 
+function showReauthModal(): void {
+  const modal = document.getElementById('reauth-modal')!
+  modal.hidden = false
+  ;(document.getElementById('ra-login') as HTMLInputElement).focus()
+}
+
+function hideReauthModal(): void {
+  const modal = document.getElementById('reauth-modal')!
+  modal.hidden = true
+  ;(document.getElementById('ra-login') as HTMLInputElement).value = ''
+  ;(document.getElementById('ra-senha') as HTMLInputElement).value = ''
+  ;(document.getElementById('ra-error') as HTMLElement).hidden = true
+}
+
 async function renewSession(): Promise<void> {
-  const res = await fetch('/api/auth/refresh', { method: 'POST', credentials: 'include' })
-  if (!res.ok) { window.location.href = '/login'; return }
-  const user = await checkAuth()
-  if (user.exp) startSessionTimer(user.exp * 1000)
+  showReauthModal()
 }
 
 // ─── Navigation ───────────────────────────────────────────────────────────────
@@ -334,6 +345,49 @@ async function boot(): Promise<void> {
     })
   })
   document.getElementById('logoutBtn')!.addEventListener('click', logout)
+
+  // Re-auth modal
+  const raConfirm = document.getElementById('ra-confirm')!
+  const raCancel  = document.getElementById('ra-cancel')!
+  const raError   = document.getElementById('ra-error')!
+
+  raConfirm.addEventListener('click', async () => {
+    const loginVal = (document.getElementById('ra-login') as HTMLInputElement).value.trim()
+    const passVal  = (document.getElementById('ra-senha') as HTMLInputElement).value
+    raError.hidden = true
+    if (!loginVal || !passVal) {
+      raError.textContent = 'Preencha login e senha.'
+      raError.hidden = false
+      return
+    }
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ login: loginVal, password: passVal })
+      })
+      if (!res.ok) {
+        raError.textContent = 'Credenciais inválidas.'
+        raError.hidden = false
+        return
+      }
+      const u = await checkAuth()
+      if (u.exp) startSessionTimer(u.exp * 1000)
+      hideReauthModal()
+      setAlertLevel(null)
+    } catch {
+      raError.textContent = 'Erro de conexão.'
+      raError.hidden = false
+    }
+  })
+
+  ;(document.getElementById('ra-login') as HTMLInputElement).addEventListener('keydown', (e: KeyboardEvent) => {
+    if (e.key === 'Enter') (document.getElementById('ra-senha') as HTMLInputElement).focus()
+  })
+  ;(document.getElementById('ra-senha') as HTMLInputElement).addEventListener('keydown', (e: KeyboardEvent) => {
+    if (e.key === 'Enter') raConfirm.click()
+  })
+  raCancel.addEventListener('click', () => { window.location.href = '/login' })
 
   initSqlTool()
   initJsonTool()

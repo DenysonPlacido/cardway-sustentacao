@@ -327,6 +327,27 @@
     </main>
   </div>
 
+  <!-- Re-auth modal -->
+  <div id="reauth-modal" hidden class="reauth-overlay">
+    <div class="reauth-box">
+      <p class="reauth-title">Sessão encerrada</p>
+      <p class="reauth-desc">Insira suas credenciais para continuar sem perder o trabalho.</p>
+      <div class="form-group" style="margin-bottom:14px;">
+        <label>Login</label>
+        <input type="text" id="ra-login" autocomplete="username" placeholder="seu login">
+      </div>
+      <div class="form-group">
+        <label>Senha</label>
+        <input type="password" id="ra-senha" autocomplete="current-password" placeholder="••••••••">
+      </div>
+      <div id="ra-error" hidden class="reauth-error"></div>
+      <div class="reauth-actions">
+        <button id="ra-confirm" class="btn-reauth-ok">Entrar</button>
+        <button id="ra-cancel" class="btn-reauth-cancel">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
   <script src="/js/home.js"></script>
   <script>
     (function () {
