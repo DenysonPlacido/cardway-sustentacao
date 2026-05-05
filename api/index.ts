@@ -402,6 +402,11 @@ app.post('/api/admin/users', async (req: Request, res: Response): Promise<void> 
   }
 })
 
+// Imagens GLPI que escapam do proxy no frontend chegam aqui — redireciona para o proxy
+app.get('/front/document.send.php', (req: Request, res: Response): void => {
+  res.redirect(302, `/api/automacao/glpi-asset?src=${encodeURIComponent(req.url)}`)
+})
+
 app.use('/api/automacao', authMiddleware, automacaoRouter)
 app.use('/api', authMiddleware, geradorRouter)
 
