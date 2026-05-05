@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Concatenador SQL</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f1f3f4;
+      color: #222;
+      margin: 0;
+      padding: 0;
+    }
+    .wrapper {
+      max-width: 700px;
+      margin: 40px auto;
+      padding: 20px;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    h3 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    label {
+      display: block;
+      margin-top: 10px;
+      font-weight: bold;
+    }
+    input[type=text], textarea {
+      width: 100%;
+      padding: 8px;
+      margin-top: 4px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+    textarea {
+      height: 150px;
+      resize: vertical;
+    }
+    .btn-group {
+      margin-top: 10px;
+    }
+    .btn {
+      display: inline-block;
+      padding: 8px 16px;
+      margin-right: 5px;
+      background-color: #004d66;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .btn:hover {
+      background-color: #006680;
+    }
+    pre {
+      background: #f7f7f7;
+      padding: 10px;
+      border-radius: 4px;
+      max-height: 300px;
+      overflow-y: auto;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="wrapper">
+  <h3>Concatenador SQL</h3>
+
+  <label>Nome da Coluna:</label>
+  <input type="text" id="coluna" placeholder="Ex: id">
+
+  <label>Cole aqui os valores (1 por linha):</label>
+  <textarea id="valores" placeholder="Ex: 123&#10;456&#10;789"></textarea>
+
+  <div class="btn-group">
+    <button class="btn" onclick="gerarConcat('string')">String</button>
+    <button class="btn" onclick="gerarConcat('numero')">Número</button>
+    <button class="btn" onclick="copiarResultado()">Copiar</button>
+  </div>
+
+  <pre id="resultado"></pre>
+</div>
+
+<script>
+function gerarConcat(tipo) {
+  const coluna = document.getElementById('coluna').value.trim();
+  if(!coluna){
+    alert('Informe o nome da coluna.');
+    return;
+  }
+
+  let valores = document.getElementById('valores').value
+                 .split('\n')
+                 .map(v => v.trim())
+                 .filter(v => v);
+
+  if(!valores.length){
+    alert('Insira pelo menos um valor.');
+    return;
+  }
+
+  if(tipo === 'string'){
+    valores = valores.map(v => `'${v}'`);
+  }
+
+  const blocos = [];
+  for(let i=0;i<valores.length;i+=1000){
+    blocos.push(valores.slice(i,i+1000));
+  }
+
+  const resultado = blocos.map(bloco => `${coluna} IN (${bloco.join(', ')})`).join(' OR\n');
+  document.getElementById('resultado').innerText = resultado;
+}
+
+function copiarResultado(){
+  const texto = document.getElementById('resultado').innerText;
+  if(!texto) return;
+  navigator.clipboard.writeText(texto).then(()=>{
+    alert('Texto copiado para a área de transferência!');
+  });
+}
+</script>
+
+</body>
+</html>

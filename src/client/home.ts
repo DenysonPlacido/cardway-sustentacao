@@ -1,6 +1,7 @@
 import { initSqlTool } from './home/sql-in'
 import { initJsonTool } from './home/json-identador'
 import { initWithTool } from './home/sql-with'
+import { initConcatenadorTool } from './home/sql-concatenador'
 import { ensureGlpiUiStructure, initGlpiTool, fetchGlpiTickets } from './home/glpi'
 
 interface UserInfo { id: number; login: string; name: string; exp?: number }
@@ -10,6 +11,7 @@ const TITLES: Record<string, string> = {
   'sql-concat': 'SQL → IN',
   'json-format': 'JSON Identador',
   'sql-with': 'SQL WITH',
+  'sql-concatenador': 'Concatenador SQL',
   automacoes: 'Atendimento GLPI',
 }
 
@@ -184,6 +186,7 @@ async function boot(): Promise<void> {
   initSqlTool()
   initJsonTool()
   initWithTool()
+  initConcatenadorTool()
   ensureGlpiUiStructure()
   initGlpiTool()
 }

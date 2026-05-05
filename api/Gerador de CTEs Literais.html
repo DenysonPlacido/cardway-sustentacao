@@ -1,0 +1,332 @@
+<!-- <!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Gerador de CTEs Literais</title>
+  <style>
+    body { 
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+      margin: 20px; 
+      background: #f5f7fa; 
+      color: #333;
+    }
+    h2 { 
+      color: #004d66; 
+      margin-bottom: 5px;
+    }
+    p.descricao {
+      font-size: 0.95rem;
+      margin-bottom: 20px;
+      color: #555;
+      max-width: 800px;
+    }
+    .container { 
+      display: flex; 
+      gap: 10px; 
+      flex-wrap: wrap; 
+      margin-bottom: 20px;
+    }
+    .box { 
+      flex: 1; 
+      min-width: 150px; 
+      display: flex; 
+      flex-direction: column; 
+    }
+    label { font-weight: bold; margin-bottom: 3px; }
+    textarea, input, button { 
+      width: 100%; 
+      margin-top: 5px; 
+      padding: 8px; 
+      border: 1px solid #ccc; 
+      border-radius: 5px; 
+      box-sizing: border-box;
+      font-family: monospace;
+    }
+    button { 
+      background-color: #004d66; 
+      color: #fff; 
+      border: none; 
+      cursor: pointer; 
+      font-size: 1rem; 
+      transition: background 0.3s;
+    }
+    button:hover { background-color: #006680; }
+    pre { 
+      background: #e9ecef; 
+      padding: 15px; 
+      white-space: pre-wrap; 
+      border-radius: 5px; 
+      overflow-x: auto;
+    }
+  </style>
+</head>
+<body>
+  <h2>🔧 Gerador de CTEs Literais</h2>
+  <p class="descricao">
+    Esta ferramenta gera uma tabela temporária (CTE) no SQL a partir de valores literais digitados. 
+    Cada linha é transformada em um SELECT, todos unidos com UNION ALL, e encapsulados em um WITH para facilitar consultas.
+  </p>
+
+  <div class="container">
+    <div class="box">
+      <label>Coluna 1:</label>
+      <textarea id="col1" rows="8" placeholder="Valor por linha"></textarea>
+      <input type="text" id="alias1" placeholder="Alias (ex: a)">
+    </div>
+    <div class="box">
+      <label>Coluna 2:</label>
+      <textarea id="col2" rows="8" placeholder="Valor por linha"></textarea>
+      <input type="text" id="alias2" placeholder="Alias (ex: b)">
+    </div>
+    <div class="box">
+      <label>Coluna 3:</label>
+      <textarea id="col3" rows="8" placeholder="Valor por linha"></textarea>
+      <input type="text" id="alias3" placeholder="Alias (ex: c)">
+    </div>
+    <div class="box">
+      <label>Coluna 4:</label>
+      <textarea id="col4" rows="8" placeholder="Valor por linha"></textarea>
+      <input type="text" id="alias4" placeholder="Alias (ex: d)">
+    </div>
+    <div class="box">
+      <label>Coluna 5:</label>
+      <textarea id="col5" rows="8" placeholder="Valor por linha"></textarea>
+      <input type="text" id="alias5" placeholder="Alias (ex: e)">
+    </div>
+    <div class="box">
+      <label>Coluna 6:</label>
+      <textarea id="col6" rows="8" placeholder="Valor por linha"></textarea>
+      <input type="text" id="alias6" placeholder="Alias (ex: f)">
+    </div>
+  </div>
+
+  <button onclick="gerarSQL()">Gerar SQL</button>
+
+  <h3>Resultado:</h3>
+  <pre id="resultado"></pre>
+
+  <script>
+    function gerarSQL() {
+      const colunas = [];
+      for (let i = 1; i <= 6; i++) {
+        const valores = document.getElementById(`col${i}`).value.trim().split("\n").filter(v => v !== "");
+        const alias = document.getElementById(`alias${i}`).value.trim() || `col${i}`;
+        if (valores.length > 0) {
+          colunas.push({ alias, valores });
+        }
+      }
+
+      if (colunas.length === 0) {
+        alert("Preencha pelo menos uma coluna.");
+        return;
+      }
+
+      const numLinhas = colunas[0].valores.length;
+      if (!colunas.every(c => c.valores.length === numLinhas)) {
+        alert("Todas as colunas preenchidas devem ter o mesmo número de linhas.");
+        return;
+      }
+
+      let sql = `WITH dados AS (\n  SELECT ${colunas.map(c => c.alias).join(", ")} FROM (\n`;
+
+      const linhas = [];
+      for (let i = 0; i < numLinhas; i++) {
+        const selects = colunas.map(c => `${c.valores[i]} AS ${c.alias}`).join(", ");
+        linhas.push(`    SELECT ${selects} FROM DUAL${i < numLinhas - 1 ? " UNION ALL" : ""}`);
+      }
+
+      sql += linhas.join("\n") + `\n  )\n)\nSELECT * FROM dados;`;
+      document.getElementById("resultado").textContent = sql;
+    }
+  </script>
+</body>
+</html>
+ -->
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ <!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Gerador de CTEs Literais</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 20px;
+      background: #f5f7fa;
+      color: #333;
+    }
+    h2 {
+      color: #004d66;
+      margin-bottom: 5px;
+    }
+    p.descricao {
+      font-size: 0.95rem;
+      margin-bottom: 20px;
+      color: #555;
+      max-width: 800px;
+    }
+    .container {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+    .box {
+      flex: 1;
+      min-width: 150px;
+      display: flex;
+      flex-direction: column;
+    }
+    label { font-weight: bold; margin-bottom: 3px; }
+    textarea, input, select, button {
+      width: 100%;
+      margin-top: 5px;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      box-sizing: border-box;
+      font-family: monospace;
+    }
+    button {
+      background-color: #004d66;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: background 0.3s;
+    }
+    button:hover { background-color: #006680; }
+    pre {
+      background: #e9ecef;
+      padding: 15px;
+      white-space: pre-wrap;
+      border-radius: 5px;
+      overflow-x: auto;
+    }
+  </style>
+</head>
+<body>
+  <h2>🔧 Gerador de CTEs Literais</h2>
+  <p class="descricao">
+    Esta ferramenta gera uma tabela temporária (CTE) no SQL a partir de valores literais digitados.
+    Cada linha é transformada em um SELECT, todos unidos com UNION ALL, e encapsulados em um WITH para facilitar consultas.
+  </p>
+
+  <div class="container">
+    <!-- Coluna 1 -->
+    <div class="box">
+      <label>Coluna 1:</label>
+      <textarea id="col1" rows="8" placeholder="Valor por linha"></textarea>
+      <input type="text" id="alias1" placeholder="Alias (ex: a)">
+      <select id="tipo1">
+        <option value="string">String</option>
+        <option value="int">Inteiro</option>
+      </select>
+    </div>
+    <!-- Coluna 2 -->
+    <div class="box">
+      <label>Coluna 2:</label>
+      <textarea id="col2" rows="8" placeholder="Valor por linha"></textarea>
+      <input type="text" id="alias2" placeholder="Alias (ex: b)">
+      <select id="tipo2">
+        <option value="string">String</option>
+        <option value="int">Inteiro</option>
+      </select>
+    </div>
+    <!-- Coluna 3 -->
+    <div class="box">
+      <label>Coluna 3:</label>
+      <textarea id="col3" rows="8" placeholder="Valor por linha"></textarea>
+      <input type="text" id="alias3" placeholder="Alias (ex: c)">
+      <select id="tipo3">
+        <option value="string">String</option>
+        <option value="int">Inteiro</option>
+      </select>
+    </div>
+    <!-- Coluna 4 -->
+    <div class="box">
+      <label>Coluna 4:</label>
+      <textarea id="col4" rows="8" placeholder="Valor por linha"></textarea>
+      <input type="text" id="alias4" placeholder="Alias (ex: d)">
+      <select id="tipo4">
+        <option value="string">String</option>
+        <option value="int">Inteiro</option>
+      </select>
+    </div>
+    <!-- Coluna 5 -->
+    <div class="box">
+      <label>Coluna 5:</label>
+      <textarea id="col5" rows="8" placeholder="Valor por linha"></textarea>
+      <input type="text" id="alias5" placeholder="Alias (ex: e)">
+      <select id="tipo5">
+        <option value="string">String</option>
+        <option value="int">Inteiro</option>
+      </select>
+    </div>
+    <!-- Coluna 6 -->
+    <div class="box">
+      <label>Coluna 6:</label>
+      <textarea id="col6" rows="8" placeholder="Valor por linha"></textarea>
+      <input type="text" id="alias6" placeholder="Alias (ex: f)">
+      <select id="tipo6">
+        <option value="string">String</option>
+        <option value="int">Inteiro</option>
+      </select>
+    </div>
+  </div>
+
+  <button onclick="gerarSQL()">Gerar SQL</button>
+
+  <h3>Resultado:</h3>
+  <pre id="resultado"></pre>
+
+  <script>
+    function gerarSQL() {
+      const colunas = [];
+      for (let i = 1; i <= 6; i++) {
+        const valores = document.getElementById(`col${i}`).value.trim().split("\n").filter(v => v !== "");
+        const alias = document.getElementById(`alias${i}`).value.trim() || `col${i}`;
+        const tipo = document.getElementById(`tipo${i}`).value;
+        if (valores.length > 0) {
+          colunas.push({ alias, valores, tipo });
+        }
+      }
+
+      if (colunas.length === 0) {
+        alert("Preencha pelo menos uma coluna.");
+        return;
+      }
+
+      const numLinhas = colunas[0].valores.length;
+      if (!colunas.every(c => c.valores.length === numLinhas)) {
+        alert("Todas as colunas preenchidas devem ter o mesmo número de linhas.");
+        return;
+      }
+
+      let sql = `WITH dados AS (\n  SELECT ${colunas.map(c => c.alias).join(", ")} FROM (\n`;
+
+      const linhas = [];
+      for (let i = 0; i < numLinhas; i++) {
+        const selects = colunas.map(c => {
+          let valor = c.valores[i];
+          if (c.tipo === "string") {
+            valor = "'" + valor.replace(/'/g, "''") + "'";
+          }
+          return `${valor} AS ${c.alias}`;
+        }).join(", ");
+        linhas.push(`    SELECT ${selects} FROM DUAL${i < numLinhas - 1 ? " UNION ALL" : ""}`);
+      }
+
+      sql += linhas.join("\n") + `\n  )\n)\nSELECT * FROM dados;`;
+      document.getElementById("resultado").textContent = sql;
+    }
+  </script>
+</body>
+</html>

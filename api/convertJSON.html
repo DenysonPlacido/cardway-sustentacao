@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Conversor Rede Tendência - v5.0 (Extração de JSON Puro)</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .card { background: white; padding: 40px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 100%; max-width: 550px; text-align: center; }
+        .upload-zone { border: 2px dashed #1a73e8; padding: 30px; border-radius: 10px; background: #f8f9ff; cursor: pointer; }
+        #log { margin-top: 20px; text-align: left; font-size: 11px; background: #1e1e1e; color: #00ff00; padding: 15px; border-radius: 8px; max-height: 250px; overflow-y: auto; font-family: monospace; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h1>Conversor Postman v5.0</h1>
+    <p>Limpando tags <code>&lt;span&gt;</code> e extraindo JSON do Body.</p>
+    
+    <div class="upload-zone" onclick="document.getElementById('fileInput').click()">
+        <strong>Selecionar api-tendencia.html</strong>
+        <input type="file" id="fileInput" accept=".html" style="display:none">
+    </div>
+
+    <div id="log" style="display:none"></div>
+</div>
+
+<script>
+document.getElementById('fileInput').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(event) { parseHtml(event.target.result); };
+    reader.readAsText(file);
+});
+
+function parseHtml(htmlString) {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(htmlString, 'text/html');
+    const log = document.getElementById('log');
+    log.style.display = 'block';
+    log.innerHTML = "Iniciando limpeza e extração...<br>";
+
+    const collection = {
+        "info": {
+            "name": "Rede Tendência - API MS-Distribuição",
+            "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+        },
+        "item": [],
+        "variable": [
+            { "key": "baseUrl", "value": "https://microservices-hml.redetendencia.com.br/api_rest/ms-distribuicao" },
+            { "key": "userId", "value": "9999" }
+        ]
+    };
+
+    const folders = {};
+    const articles = doc.querySelectorAll('article');
+
+    articles.forEach(article => {
+        const group = article.getAttribute('data-group') || "Geral";
+        const name = article.querySelector('h1')?.innerText || "Sem nome";
+        
+        if (!folders[group]) {
+            folders[group] = { "name": group, "item": [] };
+            collection.item.push(folders[group]);
+        }
+
+        const method = (article.querySelector('.type')?.innerText || "POST").toUpperCase();
+        const urlLine = article.querySelector('pre.prettyprint')?.innerText.split('\n')[0] || "/";
+        const path = urlLine.replace(/https?:\/\/[^\/]+/, "").trim();
+
+        // --- LÓGICA DE EXTRAÇÃO REFORÇADA ---
+        let finalBody = "";
+        let maxKeysFound = -1;
+
+        // Pegamos todos os blocos de código
+        const codeBlocks = article.querySelectorAll('pre.prettyprint');
+        
+        codeBlocks.forEach(block => {
+            // Usamos innerText para ignorar as tags <span> e pegar o texto puro do JSON
+            const rawText = block.innerText;
+
+            // Filtros de segurança:
+            if (rawText.toLowerCase().includes('http/1.1 4') || 
+                rawText.toLowerCase().includes('error-response') ||
+                rawText.toLowerCase().includes('status": "ok"')) return;
+
+            // Extraímos o conteúdo entre chaves { }
+            const match = rawText.match(/\{[\s\S]*\}/);
+            if (match) {
+                const jsonStr = match[0].trim();
+                // Contamos quantos campos o JSON tem para garantir que é o Body e não uma URL simples
+                const keys = (jsonStr.match(/":/g) || []).length;
+                
+                if (keys > maxKeysFound) {
+                    maxKeysFound = keys;
+                    finalBody = jsonStr;
+                }
+            }
+        });
+
+        // --- TABELAS ---
+        let description = `## ${name}\n\n`;
+        article.querySelectorAll('table').forEach(table => {
+            const rows = Array.from(table.querySelectorAll('tr'));
+            rows.forEach((row, i) => {
+                const cells = Array.from(row.querySelectorAll('th, td')).map(c => c.innerText.trim());
+                if (cells.length > 0) {
+                    description += "| " + cells.join(" | ") + " |\n";
+                    if (i === 0) description += "| " + cells.map(() => "---").join(" | ") + " |\n";
+                }
+            });
+            description += "\n";
+        });
+
+        folders[group].item.push({
+            "name": name,
+            "request": {
+                "method": method,
+                "header": [
+                    { "key": "Content-Type", "value": "application/json" },
+                    { "key": "x-tnd-user-id-usuario", "value": "{{userId}}" }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": finalBody
+                },
+                "url": {
+                    "raw": "{{baseUrl}}" + path,
+                    "host": ["{{baseUrl}}"],
+                    "path": path.replace(/^\//, "").split('/')
+                },
+                "description": description
+            }
+        });
+
+        log.innerHTML += `> ${name}: ${maxKeysFound} campos extraídos.<br>`;
+    });
+
+    download(collection);
+}
+
+function download(obj) {
+    const data = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(obj, null, 2));
+    const a = document.createElement('a');
+    a.href = data;
+    a.download = "Rede_Tendencia_Full_v5.json";
+    a.click();
+}
+</script>
+</body>
+</html>
