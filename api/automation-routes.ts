@@ -322,7 +322,8 @@ router.post('/tickets/:ticketId/reply', async (req: Request, res: Response): Pro
   }
 
   try {
-    await glpiService.replyToTicket(ticketId, content, isPrivate)
+    const client = buildGlpiClient()
+    await withGlpiSession(client, (c) => c.addFollowup(ticketId, content, isPrivate))
     res.json({ success: true })
   } catch (error) {
     console.error('[automacao] tickets/:ticketId/reply error:', error)

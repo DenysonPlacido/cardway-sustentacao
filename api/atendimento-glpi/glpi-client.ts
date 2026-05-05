@@ -186,11 +186,11 @@ export class GlpiClient {
     }
   }
 
-  async addFollowup(ticketId: number, content: string): Promise<void> {
+  async addFollowup(ticketId: number, content: string, isPrivate = false): Promise<void> {
     const res = await fetch(`${this.baseUrl}/ITILFollowup`, {
       method: 'POST',
       headers: this.sessionHeaders(),
-      body: JSON.stringify({ input: { itemtype: 'Ticket', items_id: ticketId, content } }),
+      body: JSON.stringify({ input: { itemtype: 'Ticket', items_id: ticketId, content, is_private: isPrivate ? 1 : 0 } }),
     })
     if (!res.ok) {
       const body = await res.text()
