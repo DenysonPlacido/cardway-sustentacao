@@ -63,59 +63,51 @@ export class GlpiService {
     }
   }
 
-  /**
-   * ESTE É O MÉTODO QUE ESTAVA FALTANDO
-   * Adiciona um acompanhamento (followup) no chamado
-   */
+  async killSession(): Promise<void> {
+    try {
+      await this.api.get('/killSession')
+    } catch {
+      // ignora erro ao encerrar sessão
+    } finally {
+      this.sessionToken = null
+      delete this.api.defaults.headers.common['Session-Token']
+    }
+  }
+
+  private async withSession<T>(fn: () => Promise<T>): Promise<T> {
+    await this.initSession(process.env.GLPI_USER_TOKEN ?? '')
+    try {
+      return await fn()
+    } finally {
+      await this.killSession()
+    }
+  }
+
   async addAnalysisFollowup(ticketId: number, content: string): Promise<void> {
-    try {
+    await this.withSession(async () => {
       await this.api.post(`/Ticket/${ticketId}/ITILFollowup`, {
-        input: {
-          tickets_id: ticketId,
-          content: content,
-          is_private: 0 // 0 para público, 1 para privado
-        }
-      });
-      console.log(`Acompanhamento adicionado ao ticket #${ticketId}`);
-    } catch (error) {
-      console.error(`Erro ao postar acompanhamento no ticket ${ticketId}:`, error);
-      throw error;
-    }
+        input: { tickets_id: ticketId, content, is_private: 0 }
+      })
+      console.log(`Acompanhamento adicionado ao ticket #${ticketId}`)
+    })
   }
 
-  /**
-   * Responde ao chamado com um follow-up público.
-   */
   async replyToTicket(ticketId: number, content: string, isPrivate = false): Promise<void> {
-    try {
+    await this.withSession(async () => {
       await this.api.post(`/Ticket/${ticketId}/ITILFollowup`, {
-        input: {
-          tickets_id: ticketId,
-          content: content,
-          is_private: isPrivate ? 1 : 0
-        }
-      });
-      console.log(`Resposta adicionada ao ticket #${ticketId}`);
-    } catch (error) {
-      console.error(`Erro ao responder o ticket ${ticketId}:`, error);
-      throw error;
-    }
+        input: { tickets_id: ticketId, content, is_private: isPrivate ? 1 : 0 }
+      })
+      console.log(`Resposta adicionada ao ticket #${ticketId}`)
+    })
   }
 
-  /**
-   * Atualiza campos básicos do chamado no GLPI.
-   */
   async updateTicket(ticketId: number, data: { name?: string; content?: string }): Promise<void> {
-    try {
-      const input: Record<string, unknown> = { id: ticketId };
-      if (data.name !== undefined) input.name = data.name;
-      if (data.content !== undefined) input.content = data.content;
-
-      await this.api.put(`/Ticket/${ticketId}`, { input });
-      console.log(`Ticket #${ticketId} atualizado`);
-    } catch (error) {
-      console.error(`Erro ao atualizar o ticket ${ticketId}:`, error);
-      throw error;
-    }
+    await this.withSession(async () => {
+      const input: Record<string, unknown> = { id: ticketId }
+      if (data.name !== undefined) input.name = data.name
+      if (data.content !== undefined) input.content = data.content
+      await this.api.put(`/Ticket/${ticketId}`, { input })
+      console.log(`Ticket #${ticketId} atualizado`)
+    })
   }
 }
