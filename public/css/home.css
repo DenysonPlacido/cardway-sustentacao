@@ -299,7 +299,7 @@ html, body {
   color: var(--t2); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 7px;
 }
 
-input[type="text"], textarea {
+input[type="text"], input[type="password"], textarea {
   width: 100%; padding: 10px 12px;
   background: var(--input); border: 1px solid var(--border-l);
   border-radius: var(--r); color: var(--t1);
@@ -307,11 +307,11 @@ input[type="text"], textarea {
   outline: none; resize: vertical;
   transition: border-color 0.15s, box-shadow 0.15s;
 }
-input[type="text"]:focus, textarea:focus {
+input[type="text"]:focus, input[type="password"]:focus, textarea:focus {
   border-color: rgba(255,106,0,0.5);
   box-shadow: 0 0 0 3px rgba(255,106,0,0.08);
 }
-input[type="text"]::placeholder, textarea::placeholder { color: var(--t3); }
+input[type="text"]::placeholder, input[type="password"]::placeholder, textarea::placeholder { color: var(--t3); }
 
 .cols-grid   { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 7px; }
 .blocks-list { display: flex; flex-direction: column; gap: 7px; }

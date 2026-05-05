@@ -91,10 +91,11 @@ export class GlpiClient {
   }
 
   async listTickets(status?: number): Promise<GlpiTicket[]> {
-    const params = new URLSearchParams({ range: '0-49', sort: '15', order: 'DESC' })
+    const params = new URLSearchParams({ range: '0-49', sort: '15', order: 'DESC', expand_dropdowns: 'true' })
     console.log('[GLPI] listTickets status filter:', status)
 
-    params.set('criteria[0][field]', '65')
+    // Filtra por grupo técnico (campo 8) — mesmo critério usado no GLPI
+    params.set('criteria[0][field]', '8')
     params.set('criteria[0][searchtype]', 'contains')
     params.set('criteria[0][value]', OBSERVER_GROUP_FILTER)
 
@@ -104,7 +105,7 @@ export class GlpiClient {
       params.set('criteria[1][value]', String(status))
     }
 
-    // forcedisplay: 2=ID, 1=Name, 5=Técnico, 8=Grupo técnico, 12=Status, 3=Prioridade, 15=Date, 21=Description
+    // forcedisplay: 2=ID, 1=Name, 5=Técnico, 8=Grupo técnico, 12=Status, 3=Prioridade, 15=Date, 21=Description, 65=Grupo observador
     const displayFields = ['2', '1', '5', '8', '65', '12', '3', '15', '21']
     displayFields.forEach((field, i) => params.set(`forcedisplay[${i}]`, field))
 
@@ -119,11 +120,46 @@ export class GlpiClient {
     }
 
     const data = (await res.json()) as { data?: GlpiTicketRaw[] }
-    const tickets = (data.data ?? [])
-      .map(mapTicket)
-      .filter((ticket) => ticket.observerGroup.toLowerCase().includes(OBSERVER_GROUP_FILTER.toLowerCase()))
+    let tickets = (data.data ?? []).map(mapTicket)
+
+    // Resolve IDs de técnico para nomes reais
+    const uidMap = new Map<string, Set<number>>()
+    tickets.forEach((t, i) => {
+      const match = t.assignedTo.match(/^__uid__(\d+)$/)
+      if (match) {
+        if (!uidMap.has(match[1])) uidMap.set(match[1], new Set())
+        uidMap.get(match[1])!.add(i)
+      }
+    })
+
+    if (uidMap.size > 0) {
+      const resolved = await Promise.all(
+        [...uidMap.keys()].map(async (uid) => {
+          const name = await this.getUserName(Number(uid))
+          return { uid, name }
+        })
+      )
+      resolved.forEach(({ uid, name }) => {
+        uidMap.get(uid)?.forEach((i) => {
+          tickets[i] = { ...tickets[i], assignedTo: name ?? `Técnico #${uid}` }
+        })
+      })
+    }
+
     console.log('[GLPI] listTickets retornou', tickets.length, 'tickets')
     return tickets
+  }
+
+  private async getUserName(userId: number): Promise<string | null> {
+    try {
+      const res = await fetch(`${this.baseUrl}/User/${userId}`, { headers: this.sessionHeaders() })
+      if (!res.ok) return null
+      const data = await res.json() as { realname?: string; firstname?: string; name?: string }
+      const fullName = [data.firstname, data.realname].filter(Boolean).join(' ').trim()
+      return fullName || String(data.name ?? '').trim() || null
+    } catch {
+      return null
+    }
   }
 
   async getTicket(id: number): Promise<GlpiTicket | null> {
@@ -166,10 +202,12 @@ export class GlpiClient {
 function mapTicket(r: GlpiTicketRaw): GlpiTicket {
   const statusNum = Number(r['12'] ?? r.status ?? 1)
   const priorityNum = Number(r['3'] ?? r.priority ?? 3)
-  const technician = normalizeAssignment(r['5'])
+  const technicianRaw = String(r['5'] ?? '').trim()
+  const technician = /^\d+$/.test(technicianRaw) ? '' : technicianRaw
+  const technicianId = /^\d+$/.test(technicianRaw) && technicianRaw !== '0' ? technicianRaw : ''
   const technicalGroup = normalizeAssignment(r['8'])
   const observerGroup = String(r['65'] ?? '').trim()
-  const assignedTo = [technicalGroup, technician].filter(Boolean).join(' · ') || 'Sem atribuição'
+  const assignedTo = technician || (technicianId ? `__uid__${technicianId}` : '') || technicalGroup || 'Sem atribuição'
 
   return {
     id: Number(r['2'] ?? r.id ?? 0),
@@ -188,17 +226,17 @@ function mapTicket(r: GlpiTicketRaw): GlpiTicket {
 
 function normalizeAssignment(value: unknown): string {
   const raw = String(value ?? '').trim()
-  if (!raw) return ''
-
-  if (/^\d+$/.test(raw)) {
-    return `Técnico #${raw}`
-  }
-
+  if (!raw || raw === '0') return ''
+  if (/^\d+$/.test(raw)) return ''
   return raw
 }
 
 function resolveAssetUrl(baseUrl: string, src: string): string {
   const raw = String(src ?? '').trim()
+    .replace(/&amp;/gi, '&')
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/&quot;/gi, '"')
   if (!raw) throw new Error('src inválido')
 
   if (/^data:/i.test(raw)) {
