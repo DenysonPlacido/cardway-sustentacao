@@ -2,6 +2,8 @@ import { initSqlTool } from './home/sql-in'
 import { initJsonTool } from './home/json-identador'
 import { initWithTool } from './home/sql-with'
 import { ensureGlpiUiStructure, initGlpiTool, fetchGlpiTickets } from './home/glpi'
+import { initLogPedidoTool } from './home/log-pedido'
+import { initLogWebTool } from './home/log-web'
 
 interface UserInfo { id: number; login: string; name: string; exp?: number }
 
@@ -10,6 +12,8 @@ const TITLES: Record<string, string> = {
   'sql-concat': 'SQL → IN',
   'json-format': 'JSON Identador',
   'sql-with': 'SQL WITH',
+  'log-pedido': 'Logs de Pedido',
+  'log-web': 'Logs Web SGV',
   automacoes: 'Atendimento GLPI',
 }
 
@@ -107,6 +111,36 @@ function navigateTo(id: string): void {
   activeSection = id
 }
 
+function initSidebar(): void {
+  const sidebar = document.getElementById('mainSidebar')!
+  const overlay = document.getElementById('sidebarOverlay')!
+  const hamburger = document.getElementById('hamburgerBtn')!
+  const collapseBtn = document.getElementById('sidebarCollapseBtn')!
+
+  function closeMobile(): void {
+    sidebar.classList.remove('mobile-open')
+    overlay.classList.remove('active')
+  }
+
+  hamburger.addEventListener('click', () => {
+    const open = sidebar.classList.toggle('mobile-open')
+    overlay.classList.toggle('active', open)
+  })
+
+  overlay.addEventListener('click', closeMobile)
+
+  collapseBtn.addEventListener('click', () => {
+    sidebar.classList.toggle('collapsed')
+  })
+
+  // Close mobile sidebar when any nav item is clicked
+  document.querySelectorAll<HTMLElement>('.nav-item, .nav-subitem').forEach((el) => {
+    el.addEventListener('click', () => {
+      if (window.innerWidth <= 768) closeMobile()
+    })
+  })
+}
+
 async function boot(): Promise<void> {
   const user = await checkAuth()
 
@@ -181,9 +215,12 @@ async function boot(): Promise<void> {
   })
   raCancel.addEventListener('click', () => { window.location.href = '/login' })
 
+  initSidebar()
   initSqlTool()
   initJsonTool()
   initWithTool()
+  initLogPedidoTool()
+  initLogWebTool()
   ensureGlpiUiStructure()
   initGlpiTool()
 }

@@ -98,7 +98,7 @@ export class AiService {
 
   constructor(apiKey: string) {
     this.client = new OpenAI({
-      apiKey,
+      apiKey: apiKey || 'no-key',
       baseURL: GEMINI_BASE_URL,
     });
   }

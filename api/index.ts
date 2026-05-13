@@ -6,6 +6,8 @@ import bcrypt from 'bcryptjs'
 import path from 'path'
 import { Pool } from 'pg'
 import automacaoRouter from './automation-routes'
+import logsRouter from './logs-routes'
+import logsWebRouter from './logs-web-routes'
 import { createGeradorDb } from './gerador/db'
 import { createGeradorRouter } from './gerador/routes'
 
@@ -403,6 +405,8 @@ app.post('/api/admin/users', async (req: Request, res: Response): Promise<void> 
 })
 
 app.use('/api/automacao', authMiddleware, automacaoRouter)
+app.use('/api/logs/web', authMiddleware, logsWebRouter)
+app.use('/api/logs', authMiddleware, logsRouter)
 app.use('/api', authMiddleware, geradorRouter)
 
 const LANCAMENTO_DIR = path.join(PUBLIC_DIR, 'lancamento')
