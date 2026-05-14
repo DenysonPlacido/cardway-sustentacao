@@ -1,0 +1,478 @@
+/* --- Variáveis de Tema do eGest --- */
+:root {
+    --primary-color: #2c3e50;
+    --accent-color: #3498db;
+    --bg-light: #f8f9fa;
+    --border-color: #e0e0e0;
+    --text-main: #333;
+    --white: #ffffff;
+}
+
+/* --- Container de Conteúdo Injetado --- */
+.page-content {
+    animation: fadeIn 0.3s ease-in-out;
+    color: var(--text-main);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.6;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.page-content h2 {
+    color: var(--primary-color);
+    border-bottom: 2px solid var(--accent-color);
+    padding-bottom: 8px;
+    margin-bottom: 20px;
+}
+
+/* --- Estilo para FAQ (fag.html) --- */
+.faq-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.faq-item {
+    background: var(--bg-light);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 10px;
+    transition: all 0.3s ease;
+}
+
+.faq-item[open] {
+    background: var(--white);
+    border-color: var(--accent-color);
+}
+
+.faq-item summary {
+    font-weight: 600;
+    cursor: pointer;
+    list-style: none;
+    outline: none;
+}
+
+.faq-item summary::-webkit-details-marker {
+    display: none; /* Esconde a seta padrão no Chrome */
+}
+
+.faq-item p {
+    margin-top: 10px;
+    padding-left: 10px;
+    color: #666;
+}
+
+/* --- Estilo para Manual do Usuário --- */
+.manual-sections article {
+    margin-bottom: 25px;
+    padding: 15px;
+    background: var(--white);
+    border-left: 4px solid var(--accent-color);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.manual-sections h3 {
+    margin-top: 0;
+    color: var(--accent-color);
+}
+
+/* --- Estilo para Suporte (Cards e Botões) --- */
+.support-container {
+    text-align: center;
+    padding: 20px;
+}
+
+.contact-methods {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin: 30px 0;
+}
+
+.btn-support {
+    text-decoration: none;
+    padding: 12px 25px;
+    border-radius: 5px;
+    font-weight: bold;
+    color: white;
+    transition: opacity 0.3s;
+}
+
+.btn-support[href*="wa.me"] { background-color: #25d366; }
+.btn-support[href*="mailto"] { background-color: var(--primary-color); }
+
+.btn-support:hover {
+    opacity: 0.8;
+}
+
+.status-info {
+    font-size: 0.9em;
+    color: #888;
+}
+
+.status-online {
+    color: #27ae60;
+    font-weight: bold;
+}
+
+/* ── mod-page integration ── */
+main.content > section.mod-page.ajuda-page {
+  width: 100% !important; max-width: none !important; min-width: 0;
+}
+
+.ajuda-stats {
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px;
+}
+.ajuda-stats .mod-mini-card { display: flex; flex-direction: column; }
+
+.ajuda-help {
+  display: flex; gap: 10px; align-items: center; border-radius: 16px;
+  padding: 14px 16px; border: 1px solid var(--color-border);
+  background: var(--color-surface); color: var(--color-text);
+  font-size: 14px; line-height: 1.45; box-shadow: var(--surface-shadow-sm);
+}
+.ajuda-help i { color: var(--color-primary); flex-shrink: 0; }
+
+@media (max-width: 980px) { .ajuda-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 600px) { .ajuda-stats { grid-template-columns: 1fr; } }
+
+/* ── Seção Meus Chamados ── */
+.chamados-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 28px;
+}
+
+.chamados-titulo {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-text);
+  margin: 0;
+}
+
+.chamados-filtros {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.chamados-filtro-label {
+  font-size: 0.875rem;
+  color: var(--color-text-muted, var(--color-text));
+  white-space: nowrap;
+}
+
+.chamados-select {
+  min-width: 160px;
+  max-width: 220px;
+}
+
+.chamados-ticket-num {
+  font-family: monospace;
+  font-size: 0.85rem;
+  color: var(--color-primary);
+  white-space: nowrap;
+}
+
+.chamados-paginacao {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 8px 0 4px;
+  flex-wrap: wrap;
+}
+
+.chamados-btn-pag {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.875rem;
+}
+
+.chamados-pag-info {
+  font-size: 0.875rem;
+  color: var(--color-text-muted, var(--color-text));
+  white-space: nowrap;
+}
+
+@media (max-width: 600px) {
+  .chamados-filtros { flex-direction: column; align-items: flex-start; }
+  .chamados-select  { max-width: 100%; width: 100%; }
+}
+
+/* ── Header da seção com botão Novo Chamado ── */
+.chamados-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+/* ── Overlay ── */
+.chamado-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  z-index: 400;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s;
+}
+.chamado-overlay.visivel {
+  opacity: 1;
+  pointer-events: all;
+}
+
+/* ── Painel lateral ── */
+.chamado-painel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: min(520px, 100vw);
+  height: 100dvh;
+  background: var(--color-surface, #fff);
+  box-shadow: -4px 0 24px rgba(0, 0, 0, 0.12);
+  z-index: 500;
+  display: flex;
+  flex-direction: column;
+  transform: translateX(100%);
+  transition: transform 0.28s ease;
+}
+.chamado-painel.aberto { transform: translateX(0); }
+
+.chamado-painel-topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--color-border, #e0e0e0);
+  flex-shrink: 0;
+}
+.chamado-painel-titulo {
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--color-text, #333);
+}
+.chamado-painel-fechar {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-muted, #888);
+  font-size: 1.1rem;
+  padding: 4px 6px;
+  border-radius: 6px;
+  transition: background 0.15s;
+}
+.chamado-painel-fechar:hover { background: var(--color-hover, #f0f0f0); }
+
+.chamado-painel-corpo {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ── Detalhe do chamado ── */
+.chamado-loading,
+.chamado-erro { text-align: center; color: var(--color-text-muted, #888); padding: 32px 0; }
+
+.chamado-detalhe-header { display: flex; flex-direction: column; gap: 4px; }
+.chamado-detalhe-top { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.chamado-detalhe-data { font-size: 0.8rem; color: var(--color-text-muted, #888); margin: 0; }
+
+.chamado-detalhe-campos { display: flex; flex-direction: column; gap: 12px; }
+.chamado-campo-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+.chamado-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.chamado-meta-item {
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid var(--color-border, #e0e0e0);
+  background: var(--color-surface-alt, #f8f9fa);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.chamado-valor-meta {
+  font-size: 0.85rem;
+  color: var(--color-text, #333);
+  word-break: break-word;
+}
+
+.chamado-campo { display: flex; flex-direction: column; gap: 2px; }
+.chamado-campo-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted, #888);
+}
+.chamado-campo-valor { margin: 0; font-size: 0.9rem; color: var(--color-text, #333); }
+.chamado-url { font-family: monospace; font-size: 0.8rem; word-break: break-all; }
+
+/* ── Ações de status ── */
+.chamado-status-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px;
+  background: var(--color-surface-alt, #f8f9fa);
+  border-radius: 10px;
+  border: 1px solid var(--color-border, #e0e0e0);
+}
+.chamado-status-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* ── Thread de respostas ── */
+.chamado-thread { display: flex; flex-direction: column; gap: 12px; }
+.chamado-thread-titulo {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text, #333);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.chamado-sem-respostas { font-size: 0.85rem; color: var(--color-text-muted, #888); margin: 0; }
+.chamado-anexos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+}
+.chamado-anexo-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid var(--color-border, #e0e0e0);
+  background: var(--color-surface-alt, #f8f9fa);
+  text-decoration: none;
+}
+.chamado-anexo-thumb {
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+  border-radius: 8px;
+  background: #fff;
+}
+.chamado-anexo-nome {
+  font-size: 0.8rem;
+  color: var(--color-text, #333);
+  word-break: break-word;
+}
+
+.chamado-resposta {
+  border-radius: 10px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.875rem;
+}
+.resposta-usuario {
+  background: var(--color-primary-light, #e8f0fe);
+  border: 1px solid var(--color-primary-border, #c5d8ff);
+  align-self: flex-end;
+  max-width: 90%;
+}
+.resposta-suporte {
+  background: var(--color-surface-alt, #f0f4f8);
+  border: 1px solid var(--color-border, #e0e0e0);
+  align-self: flex-start;
+  max-width: 90%;
+}
+
+.resposta-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.resposta-autor { font-weight: 600; font-size: 0.8rem; display: flex; align-items: center; gap: 4px; }
+.resposta-data { font-size: 0.75rem; color: var(--color-text-muted, #888); }
+.resposta-texto { margin: 0; line-height: 1.5; white-space: pre-wrap; }
+
+/* ── Formulário de resposta ── */
+.chamado-reply-form { display: flex; flex-direction: column; gap: 10px; }
+.chamado-reply-textarea { resize: vertical; min-height: 80px; }
+.chamado-reply-actions { display: flex; justify-content: flex-end; }
+
+/* ── Modal Novo Chamado ── */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+.modal-backdrop.visivel { opacity: 1; pointer-events: all; }
+
+.modal-box {
+  background: var(--color-surface, #fff);
+  border-radius: 14px;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.18);
+  width: 100%;
+  max-width: 480px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid var(--color-border, #e0e0e0);
+}
+.modal-titulo { font-size: 1rem; font-weight: 600; color: var(--color-text, #333); margin: 0; }
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding-top: 8px;
+}
+
+.modal-box form { padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+
+.mod-form-group { display: flex; flex-direction: column; gap: 6px; }
+
+.td-empty {
+  text-align: center;
+  color: var(--color-text-muted, #888);
+  font-size: 0.875rem;
+  padding: 24px 0 !important;
+}
+
+@media (max-width: 600px) {
+  .chamado-painel { width: 100vw; }
+  .chamados-header { flex-direction: column; align-items: flex-start; }
+  .chamado-campo-grid,
+  .chamado-meta-grid { grid-template-columns: 1fr; }
+}

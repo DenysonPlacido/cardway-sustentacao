@@ -1,0 +1,110 @@
+<link rel="stylesheet" href="/public/css/util/styleModulos.css" />
+<link rel="stylesheet" href="/public/css/ajuda/styleAjuda.css" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<section class="mod-page ajuda-page">
+  <header class="mod-hero">
+    <div class="mod-hero-copy">
+      <span class="mod-chip">Ajuda</span>
+      <h2>Suporte ao Cliente</h2>
+      <p>Abra chamados, acompanhe o status e converse com nossa equipe de suporte.</p>
+    </div>
+  </header>
+
+  <section class="chamados-section" aria-label="Meus Chamados">
+    <div class="chamados-header">
+      <h3 class="chamados-titulo">Meus Chamados</h3>
+      <button class="mod-btn mod-btn-primary" id="btn-novo-chamado">
+        <i class="fa-solid fa-plus"></i> Novo Chamado
+      </button>
+    </div>
+
+    <div class="chamados-filtros">
+      <label for="filtro-status-chamados" class="chamados-filtro-label">Filtrar por status:</label>
+      <select id="filtro-status-chamados" class="mod-input chamados-select">
+        <option value="">Todos</option>
+        <option value="aberto">Aberto</option>
+        <option value="em_analise">Em Análise</option>
+        <option value="resolvido">Resolvido</option>
+        <option value="fechado">Fechado</option>
+      </select>
+    </div>
+
+    <div class="mod-table-container">
+      <table class="mod-table" id="tabela-tickets">
+        <thead>
+          <tr>
+            <th>Ticket</th>
+            <th>Assunto</th>
+            <th>Tipo</th>
+            <th>Severidade</th>
+            <th>Status</th>
+            <th>Data</th>
+            <th style="width:60px"></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td colspan="7" class="td-empty">Carregando chamados...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="chamados-paginacao" id="chamados-paginacao">
+      <button class="mod-btn mod-btn-ghost chamados-btn-pag" id="btn-chamados-anterior" disabled>
+        <i class="fa-solid fa-chevron-left"></i> Anterior
+      </button>
+      <span class="chamados-pag-info" id="chamados-pag-info">Página 1</span>
+      <button class="mod-btn mod-btn-ghost chamados-btn-pag" id="btn-chamados-proximo" disabled>
+        Próximo <i class="fa-solid fa-chevron-right"></i>
+      </button>
+    </div>
+  </section>
+</section>
+
+<!-- Overlay -->
+<div class="chamado-overlay" id="chamado-overlay"></div>
+
+<!-- Painel de Detalhe -->
+<aside class="chamado-painel" id="chamado-painel" aria-label="Detalhe do chamado">
+  <div class="chamado-painel-topo">
+    <span class="chamado-painel-titulo">Detalhes do Chamado</span>
+    <button class="chamado-painel-fechar" id="btn-fechar-painel" aria-label="Fechar painel">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+  </div>
+  <div class="chamado-painel-corpo" id="chamado-painel-conteudo">
+    <div class="chamado-loading"><i class="fa-solid fa-spinner fa-spin"></i> Carregando...</div>
+  </div>
+</aside>
+
+<!-- Modal Novo Chamado -->
+<div class="modal-backdrop" id="modal-novo-chamado" role="dialog" aria-modal="true" aria-labelledby="modal-titulo">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 class="modal-titulo" id="modal-titulo">Novo Chamado</h3>
+      <button class="chamado-painel-fechar" id="btn-fechar-modal" aria-label="Fechar modal">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+    <form id="form-novo-chamado" novalidate>
+      <div class="mod-form-group">
+        <label class="mod-label" for="novo-assunto">Assunto <span style="color:var(--color-danger,#e53935)">*</span></label>
+        <input type="text" id="novo-assunto" class="mod-input" placeholder="Descreva brevemente o problema ou solicitação" maxlength="200" required />
+      </div>
+      <div class="mod-form-group">
+        <label class="mod-label" for="novo-descricao">Descrição detalhada</label>
+        <textarea id="novo-descricao" class="mod-input chamado-reply-textarea" placeholder="Passos para reproduzir, contexto adicional..." rows="5"></textarea>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="mod-btn mod-btn-ghost" id="btn-cancelar-modal">Cancelar</button>
+        <button type="submit" class="mod-btn mod-btn-primary">
+          <i class="fa-solid fa-paper-plane"></i> Abrir Chamado
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script type="module" src="/public/js/ajuda/scriptSuporte.js"></script>

@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pré-Validador CSV de Credenciamento em Massa</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f7f6; }
+        h1 { color: #2c3e50; }
+        textarea { width: 100%; min-height: 150px; padding: 10px; box-sizing: border-box; border: 1px solid #ccc; margin-bottom: 10px; font-family: monospace; }
+        .controls { display: flex; gap: 10px; margin-bottom: 20px; }
+        button { padding: 10px 20px; background-color: #3498db; color: white; border: none; cursor: pointer; font-size: 16px; border-radius: 5px; }
+        button:hover { background-color: #2980b9; }
+        #exportBtn { background-color: #27ae60; display: none; }
+        #exportBtn:hover { background-color: #229954; }
+        #docBtn { background-color: #2c3e50; }
+        #docBtn:hover { background-color: #34495e; }
+        
+        /* Contêiner da Tabela - Altura Fixa e Rolagem Vertical/Horizontal */
+        #dataTableContainer { 
+            margin-top: 20px; 
+            border: 1px solid #ddd; 
+            padding: 10px; 
+            background-color: #fff; 
+            max-height: 50vh; 
+            overflow: auto; /* Permite rolagem horizontal e vertical */
+        }
+
+        /* Tabela principal: layout automático e largura mínima para evitar compressão */
+        #dataTable table { 
+            border-collapse: collapse; 
+            width: 100%; 
+            min-width: 2500px; /* Largura mínima para evitar quebras de nomes longos */
+            table-layout: auto;
+            user-select: text; 
+        }
+
+        #dataTable th, #dataTable td { 
+            border: 1px solid #ccc; 
+            padding: 5px; 
+            font-size: 12px; 
+            white-space: nowrap; 
+            max-width: none; /* Permite que o conteúdo defina a largura */
+            overflow: visible; /* Garante que o texto seja visível */
+            text-overflow: clip; 
+        }
+        
+        #dataTable th { 
+            background-color: #eaf1f7; 
+            position: sticky; 
+            top: 0; 
+            z-index: 10; 
+            font-weight: bold; 
+        }
+        
+        #dataTable td { background-color: #fff; }
+        #dataTable td[contenteditable="true"]:focus { outline: 2px solid #3498db; }
+        .row-ok { background-color: #e6ffe6 !important; }
+        .row-fail { background-color: #ffe6e6 !important; }
+        .error-cell { border: 2px solid #c0392b !important; background-color: #ffcccc !important; }
+        
+
+        #results { margin-top: 20px; padding: 15px; border: 1px solid #ddd; background-color: #fff; border-radius: 5px; }
+        .validation-message { padding: 10px; margin-bottom: 10px; border-radius: 4px; }
+        .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .failure { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .warning { background-color: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
+
+        /* Estilo da Tabela de Documentação */
+        #documentationView table { 
+            border-collapse: collapse; 
+            width: 100%; 
+            table-layout: auto; 
+            min-width: 1000px;
+        }
+        #documentationView th, #documentationView td {
+             border: 1px solid #ccc; 
+             padding: 5px; 
+             font-size: 12px; 
+             white-space: normal;
+             max-width: 200px;
+        }
+
+
+    </style>
+</head>
+<body>
+
+    <h1>Pré-Validador CSV de Credenciamento - Puro (v7.9.3)</h1>
+    <p>1. Cole seu CSV. 2. **Carregue**. 3. **Corrija** as células vermelhas na tabela. 4. **Valide**.</p>
+
+    <div class="controls">
+        <button onclick="loadCSVToTable()">Carregar na Tabela</button>
+        <button onclick="validateData()">Validar Tabela</button>
+        <button id="exportBtn" onclick="exportCSV()">Exportar CSV Corrigido ⬇️</button>
+        <button id="docBtn" onclick="toggleDocumentation()">Ver Documentação de Campos 📚</button>
+    </div>
+
+    <div id="mainValidatorView">
+        <textarea id="csvInput" placeholder="Cole seu CSV aqui..."></textarea>
+        
+        <div id="dataTableContainer">
+            <div id="dataTable"></div>
+        </div>
+        
+        <div id="results">Aguardando dados...</div>
+    </div>
+    
+    <div id="documentationView" style="display: none;"></div>
+
+    <script>
+        
+        // ***************************************************************
+        // 1. CONFIGURAÇÃO CANÔNICA DE VALIDAÇÃO E ORDEM DE EXPORTAÇÃO (v7.9.3)
+        // Regras simplificadas para melhor entendimento
+        // ***************************************************************
+        const validationConfig = [
+            // DADOS BÁSICOS
+            { name: "tipoPessoa", type: "String", required: true, rule: "F ou J" },
+            { name: "cpfCnpj", type: "String", required: true, rule: "CPF ou CNPJ (com máscara)" },
+            { name: "rgInscricaoEstadual", type: "String", required: true, rule: "" },
+            { name: "orgaoEmissor", type: "String", required: true, rule: "Campo String Obrigatório: pode ser vazio (,,) se o campo for dispensado." },
+            { name: "ufEmissaoSigla", type: "String", required: true, rule: "2 letras (UF)" },
+            { name: "nomeFantasia", type: "String", required: true, rule: "" },
+            { name: "razaoSocial", type: "String", required: true, rule: "" },
+            { name: "ramoAtividadeId", type: "Number", required: true, rule: "Número Inteiro (ID do Ramo) > 0" },
+            { name: "segmento", type: "Number", required: true, rule: "Número Inteiro (0 a 4)" },
+            { name: "dataConstituicao", type: "Date", required: true, rule: "Data no formato AAAA-MM-DD" },
+            { name: "horaInicio", type: "String", required: false, rule: "Hora no formato HH:mm (se preenchido)" }, 
+            { name: "horaFim", type: "String", required: false, rule: "Hora no formato HH:mm (se preenchido)" },
+            // DADOS EMPRESARIAIS
+            { name: "empresaId", type: "Number", required: true, rule: "Número Inteiro (ID da Empresa) > 0" },
+            { name: "canaisVenda", type: "Array", required: true, rule: "Lista de IDs. Se for mais de um, use **aspas duplas** (Ex: \"14, 8\"). Se for um único ID, pode ser apenas o número (Ex: 1)." },
+            { name: "limite", type: "Number", required: false, rule: "Número Inteiro (Valor sem decimais). Ex: 5000 para R$ 50,00" },
+            { name: "agrupamentosIds", type: "Array", required: false, rule: "Lista de IDs. Se for mais de um, use **aspas duplas** (Ex: \"14, 8\"). Se for um único ID, pode ser apenas o número (Ex: 1)." },
+            { name: "tipoCliente", type: "Number", required: true, rule: "Número Inteiro (0 ou 1)" },
+            { name: "modalidade", type: "Number", required: true, rule: "Número Inteiro (0 ou 1)" },
+            // DADOS DE VISITA/CONSULTOR
+            { name: "consultorId", type: "Number", required: false, rule: "Número Inteiro (ID do Consultor, Regra: um dos dois é obrigatório)" },
+            { name: "areaId", type: "Number", required: false, rule: "Número Inteiro (ID da Área, Regra: um dos dois é obrigatório)" },
+            { name: "periodicidade", type: "Number", required: true, rule: "Número Inteiro (ID da Periodicidade) >= 0" },
+            { name: "diaVisita", type: "String", required: true, rule: "Dia(s) da semana (1-7), separados por vírgula. Ex: 2,5" },
+            { name: "dataVisita", type: "Date", required: false, rule: "Data no formato AAAA-MM-DD (se preenchido)" },
+            // CAMPOS ADICIONAIS
+            { name: "mensagemAtendimento", type: "String", required: false, rule: "" },
+            { name: "redeid", type: "Number", required: false, rule: "Número Inteiro (ID da Rede) > 0" },
+            { name: "responsavelLimite", type: "Boolean", required: false, rule: "Valor Lógico (true ou false)" },
+            { name: "responsavelCobranca", type: "Boolean", required: false, rule: "Valor Lógico (true ou false)" },
+            // NOTA FISCAL 
+            { name: "tipoEmissaoNotaFiscal", type: "Number", required: false, rule: "Número Inteiro (0: Não, 1: Única, 2: Negócio)" },
+            { name: "emailNFnegocio", type: "String", required: true, rule: "Formato de E-mail" }, 
+            { name: "idnegocioNF", type: "Number", required: true, rule: "Número Inteiro > 0" },      
+            { name: "emailNFnegocioseg", type: "String", required: false, rule: "Formato de E-mail (Opcional)" },
+            { name: "idnegocioNFseg", type: "Number", required: false, rule: "Número Inteiro > 0 (Opcional)" },
+            // SÓCIO/REPRESENTANTE
+            { name: "nomeCS", type: "String", required: true, rule: "" },
+            { name: "tipoPessoaCS", type: "String", required: true, rule: "F ou J" },
+            { name: "estadoEmissorCS", type: "Number", required: true, rule: "Número Inteiro (ID do Estado) > 0" },
+            { name: "parteSocietariaCS", type: "Number", required: true, rule: "Número Inteiro (0 a 100)" },
+            { name: "cnpjRgCS", type: "String", required: true, rule: "CPF ou CNPJ (com máscara)" },
+            { name: "dataNascimentoCS", type: "Date", required: true, rule: "Data no formato AAAA-MM-DD" },
+            { name: "orgaoEmissorCS", type: "String", required: true, rule: "" },
+            { name: "inscricaoEstadualCS", type: "String", required: false, rule: "" },
+            // CONTATOS
+            { name: "nomeCC", type: "String", required: true, rule: "" },
+            { name: "tipoContatoIdCCfone", type: "Number", required: true, rule: "Número Inteiro (ID do Tipo de Contato) > 0" },
+            { name: "fonecontatoCC", type: "String", required: true, rule: "" },
+            { name: "tipoContatoIdCCemail", type: "Number", required: true, rule: "Número Inteiro (ID do Tipo de Contato) > 0" },
+            { name: "emailcontatoCC", type: "String", required: true, rule: "Formato de E-mail" },
+            { name: "principal", type: "Boolean", required: false, rule: "Valor Lógico (true ou false)" }, 
+            { name: "recebeCobranca", type: "Boolean", required: true, rule: "Valor Lógico (true ou false)" },
+            // OPERADORES
+            { name: "nomeOP", type: "String", required: true, rule: "" },
+            { name: "senhaOP", type: "String", required: true, rule: "" },
+            { name: "papeisIdOP", type: "Array", required: true, rule: "Lista de IDs. Se for mais de um, use **aspas duplas** (Ex: \"396, 400\"). Se for um único ID, pode ser apenas o número (Ex: 1)." },
+            // ENDEREÇOS
+            { name: "tipoEnderecoIdE", type: "Number", required: true, rule: "Número Inteiro (ID do Tipo de Endereço - 1º Endereço) > 0" },
+            { name: "cepE", type: "String", required: true, rule: "CEP (com máscara)" },
+            { name: "numeroE", type: "Number", required: true, rule: "Número Inteiro >= 0" },
+            { name: "complementoE", type: "String", required: false, rule: "" },
+            { name: "tipoEnderecoIdseg", type: "Number", required: true, rule: "Número Inteiro (ID do Tipo de Endereço - 2º Endereço) > 0" },
+            { name: "cepEseg", type: "String", required: true, rule: "CEP (com máscara)" },
+            { name: "bairroIdE", type: "Number", required: false, rule: "Número Inteiro > 0 (só se for CEP Único)" },
+            { name: "logradouroId", type: "Number", required: false, rule: "Número Inteiro > 0 (só se for CEP Único)" },
+            { name: "numeroEseg", type: "Number", required: true, rule: "Número Inteiro >= 0" },
+            { name: "complementoEseg", type: "String", required: false, rule: "" },
+        ];
+
+
+        const CANONICAL_EXPORT_ORDER = validationConfig.map(config => config.name);
+        const validationConfigMap = validationConfig.reduce((map, config) => {
+            map[config.name] = config;
+            return map;
+        }, {});
+        
+        // ***************************************************************
+        // 2. FUNÇÕES AUXILIARES DE VALIDAÇÃO 
+        // ***************************************************************
+        
+        function isInteger(value) {
+            return !isNaN(value) && parseInt(Number(value)) === Number(value);
+        }
+
+        function isValidDate(dateString) {
+            const regex = /^\d{4}-\d{2}-\d{2}$/;
+            if (dateString.match(regex) === null) return false;
+            const d = new Date(dateString);
+            const dNum = d.getTime();
+            if (!dNum && dNum !== 0) return false;
+            return d.toISOString().slice(0, 10) === dateString;
+        }
+
+        function isValidTime(timeString) {
+            const regex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
+            return regex.test(timeString);
+        }
+
+        function isValidArrayFormat(value) {
+            const content = value.replace(/^"|"$/g, '');
+            if (content.trim() === '') return true; 
+            const regex = /^[0-9\s,]+$/;
+            return regex.test(content.trim());
+        }
+
+        function validateField(value, config) {
+            let errors = [];
+            const cleanValue = value.trim();
+            const isLiteralNull = cleanValue.toLowerCase() === 'null';
+            const isEmpty = cleanValue === '';
+            
+            // 1. VALIDAÇÃO DE OBRIGATORIEDADE & REJEIÇÃO DE "null" LITERAL
+            
+            if (config.required) {
+                if (isLiteralNull) {
+                    errors.push(`Não pode conter o texto **'null'**.`);
+                    return errors;
+                }
+
+                if (isEmpty && config.type !== 'String') {
+                     errors.push(`Campo **obrigatório** do tipo **${config.type}** não pode ser vazio.`);
+                     return errors;
+                }
+            } else {
+                if (isEmpty || isLiteralNull) {
+                    return errors; 
+                }
+            }
+            
+            // 3. VALIDAÇÃO DE TIPO E REGRA 
+            
+            if (config.required && config.type === 'String' && isEmpty) {
+                 return errors;
+            }
+
+
+            switch (config.type) {
+                case 'Number':
+                    if (!isInteger(cleanValue)) {
+                        errors.push("Esperado um **Número Inteiro**.");
+                    } else if (config.rule.includes("> 0") && Number(cleanValue) <= 0) {
+                        errors.push("O valor deve ser um número inteiro **maior que 0**.");
+                    } else if (config.name === "segmento" && (Number(cleanValue) < 0 || Number(cleanValue) > 4)) {
+                        errors.push("Segmento deve ser um valor entre **0 e 4**.");
+                    } else if (config.name === "parteSocietariaCS" && (Number(cleanValue) < 0 || Number(cleanValue) > 100)) {
+                        errors.push("Parte societária deve ser entre **0 e 100**.");
+                    }
+                    break;
+                
+                case 'Date':
+                    if (!isValidDate(cleanValue)) {
+                        errors.push("Formato de data inválido. Esperado: **AAAA-MM-DD**.");
+                    }
+                    break;
+
+                case 'Boolean':
+                    if (cleanValue.toLowerCase() !== 'true' && cleanValue.toLowerCase() !== 'false') {
+                        errors.push("Esperado **'true'** ou **'false'** (em minúsculo).");
+                    }
+                    break;
+
+                case 'Array':
+                    const isQuoted = cleanValue.startsWith('"') && cleanValue.endsWith('"');
+                    
+                    if (isQuoted) {
+                        // Case 1: Quoted array (can be "1" or "1, 2"). Content must follow the rule.
+                        if (!isValidArrayFormat(cleanValue)) {
+                            errors.push("O conteúdo entre aspas é inválido. Esperado apenas **IDs numéricos e vírgulas** (Ex: \"14, 8\").");
+                        }
+                    } else {
+                        // Case 2: Unquoted. Must be a single number (e.g., 123)
+                        
+                        // If it contains a comma, it must be quoted.
+                        if (cleanValue.includes(',')) {
+                            errors.push("Listas com múltiplos IDs devem estar **envolvidas por aspas duplas** (Ex: \"14, 8\").");
+                            break; 
+                        }
+
+                        // If not empty (empty is handled by the required check at the top), check if it's a single valid number.
+                        if (cleanValue !== "") {
+                            if (!isInteger(cleanValue) || Number(cleanValue) <= 0) {
+                                 errors.push("Se não estiver entre aspas duplas, deve ser um **único ID numérico inteiro > 0**.");
+                            }
+                        }
+                    }
+                    break;
+
+                case 'String':
+                    if (config.name.includes("tipoPessoa")) {
+                        const upperValue = cleanValue.toUpperCase();
+                        if (upperValue !== 'F' && upperValue !== 'J') {
+                            errors.push("Esperado **'F'** para Pessoa Física ou **'J'** para Pessoa Jurídica.");
+                        }
+                    }
+                    if (config.name === "ufEmissaoSigla" && cleanValue.length !== 2) {
+                        errors.push("UF deve ter **2 caracteres**.");
+                    }
+                    if (config.name === "diaVisita") {
+                        const days = cleanValue.split(',').map(d => d.trim()).filter(d => d);
+                        const validDays = /^[1-7]$/;
+                        if (cleanValue !== "") {
+                            for (const day of days) {
+                                if (!validDays.test(day)) {
+                                    errors.push("Dia(s) da visita deve(m) ser entre **1 e 7** e separados por vírgula (Ex: **2,3**).");
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    if (config.name.includes("email")) {
+                         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                         // Verifica se é um email, se não for nulo e não estiver vazio.
+                         if (!isLiteralNull && cleanValue !== "" && !emailRegex.test(cleanValue)) {
+                              errors.push("Formato de **E-mail** inválido.");
+                         }
+                    }
+                    if (config.name.includes("hora")) {
+                        if (!isValidTime(cleanValue)) {
+                            errors.push("Formato de hora inválido. Esperado **HH:mm**.");
+                        }
+                    }
+                    break;
+            }
+            
+            return errors;
+        }
+
+        function validateData() {
+            const table = document.getElementById('dataTable').getElementsByTagName('table')[0];
+            if (!table) {
+                document.getElementById('results').innerHTML = '<div class="validation-message failure">Erro: Nenhuma tabela encontrada. Carregue o CSV primeiro.</div>';
+                document.getElementById('exportBtn').style.display = 'none';
+                return;
+            }
+
+            const rows = table.getElementsByTagName('tr');
+            if (rows.length < 2) {
+                document.getElementById('results').innerHTML = '<div class="validation-message warning">Tabela vazia ou apenas cabeçalho.</div>';
+                document.getElementById('exportBtn').style.display = 'none';
+                return;
+            }
+            
+            let totalErrorRows = 0; 
+            let totalErrors = 0; 
+            const totalDataRows = rows.length - 1;
+            
+            // Ignora o primeiro <th> que é a "Linha"
+            const headerCells = Array.from(rows[0].getElementsByTagName('th')).slice(1).map(th => th.textContent.trim().replace(' *', '')); 
+
+            // Limpa estados anteriores
+            for (let i = 1; i < rows.length; i++) {
+                rows[i].classList.remove('row-fail', 'row-ok');
+                const cells = rows[i].getElementsByTagName('td');
+                // Ignora a primeira célula que é o número da linha
+                Array.from(cells).slice(1).forEach(cell => cell.classList.remove('error-cell'));
+            }
+
+            // Mapeamento de índice do cabeçalho
+            const headerIndexMap = {};
+            headerCells.forEach((name, index) => {
+                headerIndexMap[name] = index;
+            });
+            
+            for (let i = 1; i < rows.length; i++) {
+                const cells = rows[i].getElementsByTagName('td');
+                let rowErrors = [];
+                let rowHasError = false;
+                
+                const canonicalConsultorIndex = headerIndexMap['consultorId'];
+                const canonicalAreaIndex = headerIndexMap['areaId'];
+
+                // 4. VALIDAÇÃO CAMPO A CAMPO
+                for (let j = 0; j < CANONICAL_EXPORT_ORDER.length; j++) {
+                    const fieldName = CANONICAL_EXPORT_ORDER[j];
+                    const config = validationConfigMap[fieldName];
+                    const canonicalIndex = headerIndexMap[fieldName];
+                    
+                    // Índice na linha HTML: (índice canônico + 1) para compensar a coluna "Linha"
+                    const cellIndexInRow = canonicalIndex !== undefined ? canonicalIndex + 1 : -1; 
+
+                    if (cellIndexInRow > 0) {
+                        const cell = cells[cellIndexInRow];
+                        const value = cell ? cell.textContent.trim() : "";
+                        const errors = validateField(value, config);
+
+                        if (errors.length > 0) {
+                            rowErrors.push(`- **${fieldName}**: ${errors.join('; ')}`);
+                            if (cell) cell.classList.add('error-cell');
+                            rowHasError = true;
+                            totalErrors++;
+                        }
+                    }
+                }
+                
+                // 5. REGRA DE NEGÓCIO: consultorId OU areaId
+                const consultorIndexInRow = canonicalConsultorIndex + 1;
+                const areaIndexInRow = canonicalAreaIndex + 1;
+                const consultorIdValue = cells[consultorIndexInRow] ? cells[consultorIndexInRow].textContent.trim() : "";
+                const areaIdValue = cells[areaIndexInRow] ? cells[areaIndexInRow].textContent.trim() : "";
+
+
+                if ((!consultorIdValue || consultorIdValue.toLowerCase() === 'null') && (!areaIdValue || areaIdValue.toLowerCase() === 'null')) {
+                    rowErrors.push(`- **Regra de Negócio (Consultor/Área)**: É obrigatório informar ou **consultorId** ou **areaId**.`);
+                    rowHasError = true;
+                    // Destacar células (se existirem)
+                    if (cells[consultorIndexInRow]) cells[consultorIndexInRow].classList.add('error-cell');
+                    if (cells[areaIndexInRow]) cells[areaIndexInRow].classList.add('error-cell');
+                }
+
+                if (rowHasError) {
+                    rows[i].classList.add('row-fail');
+                    totalErrorRows++;
+                } else {
+                    rows[i].classList.add('row-ok');
+                }
+            }
+
+            // 6. RESULTADOS E MENSAGENS
+            let resultsHtml = '';
+            if (totalErrorRows === 0) {
+                resultsHtml = `<div class="validation-message success">✅ Validação concluída! ${totalDataRows} linhas válidas. O CSV está pronto para exportação.</div>`;
+                document.getElementById('exportBtn').style.display = 'inline-block';
+            } else {
+                resultsHtml = `<div class="validation-message failure">❌ Validação concluída. **${totalErrors}** erro(s) em **${totalErrorRows}** linha(s) com problemas, de um total de **${totalDataRows}** linhas de dados. Corrija as células vermelhas.</div>`;
+                document.getElementById('exportBtn').style.display = 'none';
+
+                // Exibir detalhes dos erros da primeira linha com erro
+                const firstRowWithError = Array.from(rows).find(row => row.classList.contains('row-fail'));
+                if (firstRowWithError) {
+                    const actualLineNumber = parseInt(firstRowWithError.getElementsByTagName('td')[0].textContent);
+                    const errorMessages = [];
+                    const errorCells = firstRowWithError.getElementsByTagName('td'); 
+                    
+                    for (let j = 0; j < CANONICAL_EXPORT_ORDER.length; j++) {
+                        const fieldName = CANONICAL_EXPORT_ORDER[j];
+                        const config = validationConfigMap[fieldName];
+                        const canonicalIndex = headerIndexMap[fieldName];
+                        const cellIndexInRow = canonicalIndex !== undefined ? canonicalIndex + 1 : -1;
+
+                        if (cellIndexInRow > 0) {
+                            const cell = errorCells[cellIndexInRow];
+                            const value = cell ? cell.textContent.trim() : "";
+                            const errors = validateField(value, config);
+
+                            if (errors.length > 0) {
+                                errorMessages.push(`- **${fieldName}**: ${errors.join('; ')}`);
+                            }
+                        }
+                    }
+                    
+                    const errorConsultorIndexInRow = headerIndexMap['consultorId'] + 1;
+                    const errorAreaIndexInRow = headerIndexMap['areaId'] + 1;
+                    const errorConsultorId = errorCells[errorConsultorIndexInRow] ? errorCells[errorConsultorIndexInRow].textContent.trim() : "";
+                    const errorAreaId = errorCells[errorAreaIndexInRow] ? errorCells[errorAreaIndexInRow].textContent.trim() : "";
+                    
+                     if ((!errorConsultorId || errorConsultorId.toLowerCase() === 'null') && (!errorAreaId || errorAreaId.toLowerCase() === 'null')) {
+                         if (!errorMessages.some(msg => msg.includes("Regra de Negócio"))) {
+                             errorMessages.push(`- **Regra de Negócio (Consultor/Área)**: É obrigatório informar ou consultorId ou areaId.`);
+                         }
+                     }
+
+                    resultsHtml += `<div class="validation-message warning">Detalhes dos erros da **Linha ${actualLineNumber}** (Primeira linha com falha):<br>${errorMessages.join('<br>')}</div>`;
+                }
+            }
+
+            document.getElementById('results').innerHTML = resultsHtml;
+        }
+
+        // ***************************************************************
+        // 3. FUNÇÕES DE CARREGAMENTO E EXPORTAÇÃO
+        // ***************************************************************
+
+        function loadCSVToTable() {
+            const csvInput = document.getElementById('csvInput').value.trim();
+            if (!csvInput) {
+                document.getElementById('results').innerHTML = '<div class="validation-message warning">Cole o conteúdo do CSV na caixa de texto.</div>';
+                return;
+            }
+
+            const lines = csvInput.split('\n');
+            if (lines.length === 0) return;
+
+            // DETECÇÃO DE DELIMITADOR (Ponto e Vírgula ou Vírgula)
+            const delimiter = lines[0].includes(';') ? ';' : ',';
+            
+            const parseLine = (line) => {
+                // Implementação simples de split que assume que campos entre aspas já foram tratados.
+                return line.split(delimiter).map(cell => cell.trim());
+            };
+
+            const header = parseLine(lines[0]);
+            const data = lines.slice(1).map(line => parseLine(line)).filter(row => row.length > 1 || (row.length === 1 && row[0] !== '')); // Filtra linhas vazias
+
+            let tableHTML = '<table><thead><tr>';
+            
+            // Adiciona a coluna de numeração de linha
+            tableHTML += `<th style="width: 50px;">Linha</th>`;
+            
+            // Cria o cabeçalho na ordem canônica
+            CANONICAL_EXPORT_ORDER.forEach(name => {
+                const config = validationConfigMap[name];
+                const requiredSymbol = config.required ? ' *' : '';
+                tableHTML += `<th title="${config.type}${requiredSymbol}: ${config.rule}" style="max-width: 150px;">${name}${requiredSymbol}</th>`; 
+            });
+
+            tableHTML += '</tr></thead><tbody>';
+
+            data.forEach((row, rowIndex) => {
+                // rowIndex + 2, pois o cabeçalho é a linha 1 do CSV, e os dados começam na linha 2.
+                const lineNumber = rowIndex + 2; 
+                
+                tableHTML += `<tr>`;
+                
+                // Célula do número da linha
+                tableHTML += `<td style="font-weight: bold; background-color: #f7f7f7;">${lineNumber}</td>`; 
+                
+                // Preenche as células na ordem canônica
+                CANONICAL_EXPORT_ORDER.forEach(name => {
+                    const originalIndex = header.indexOf(name);
+                    let value = originalIndex !== -1 && originalIndex < row.length ? row[originalIndex] : '';
+                    
+                    if (value.toLowerCase() === 'null') value = '';
+
+                    tableHTML += `<td contenteditable="true" data-row="${rowIndex}" data-col="${name}">${value}</td>`;
+                });
+                
+                tableHTML += `</tr>`;
+            });
+
+            tableHTML += '</tbody></table>';
+            document.getElementById('dataTable').innerHTML = tableHTML;
+            document.getElementById('results').innerHTML = '<div class="validation-message success">Tabela carregada com sucesso. **Delimitador detectado:** ' + (delimiter === ';' ? 'Ponto e Vírgula (;)' : 'Vírgula (,)') + '. Valide para verificar erros.</div>';
+            document.getElementById('exportBtn').style.display = 'none';
+        }
+
+        function exportCSV() {
+            const table = document.getElementById('dataTable').getElementsByTagName('table')[0];
+            if (!table || table.getElementsByClassName('row-fail').length > 0) {
+                alert('Corrija todos os erros antes de exportar.');
+                return;
+            }
+
+            // Solicita o delimitador ao usuário
+            let delimiter = prompt("Digite o delimitador de campo desejado (',' para vírgula ou ';' para ponto e vírgula):", ";");
+            if (delimiter !== ',' && delimiter !== ';') {
+                alert('Delimitador inválido. A exportação foi cancelada.');
+                return;
+            }
+            
+            const rows = table.getElementsByTagName('tr');
+            let csv = '';
+            
+            // 1. Exportar cabeçalho na ordem canônica
+            csv += CANONICAL_EXPORT_ORDER.join(delimiter) + '\n';
+            
+            // 2. Exportar dados
+            for (let i = 1; i < rows.length; i++) {
+                const cells = rows[i].getElementsByTagName('td');
+                const rowData = [];
+                
+                CANONICAL_EXPORT_ORDER.forEach((fieldName, canonicalColIndex) => {
+                    // Valor começa em cells[1] (cells[0] é o número da linha)
+                    const cellIndexInRow = canonicalColIndex + 1; 
+                    
+                    let value = cells[cellIndexInRow].textContent.trim();
+                    const config = validationConfigMap[fieldName];
+                    
+                    if (!value) {
+                        rowData.push('');
+                    } else if (config.type === 'Array' && value.startsWith('"') && value.endsWith('"')) {
+                        rowData.push(value);
+                    } else if (value.includes(delimiter) || value.includes('"') || value.includes('\n')) {
+                        // Envolver strings em aspas duplas, tratando aspas internas (padrão CSV)
+                        rowData.push(`"${value.replace(/"/g, '""')}"`);
+                    } else {
+                        rowData.push(value);
+                    }
+                });
+                
+                csv += rowData.join(delimiter) + '\n';
+            }
+
+            // Download
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            if (link.download !== undefined) {
+                const url = URL.createObjectURL(blob);
+                link.setAttribute("href", url);
+                const delimiterName = delimiter === ';' ? 'PV' : 'V';
+                link.setAttribute("download", `credenciamento_corrigido_delimitado_por_${delimiterName}.csv`);
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+        }
+        
+        // ***************************************************************
+        // 4. FUNÇÕES DE DOCUMENTAÇÃO
+        // ***************************************************************
+
+        function generateDocumentationHTML() {
+            // DOCUMENTAÇÃO ATUALIZADA (v7.9.3 - Sem a coluna "Aceita Vazio?")
+            const docData = `Campo;Nome Tabela;Obrigatorio?;Aceita Nulo?;Tipo;Descrição;Exemplo
+tipoPessoa;tipoPessoa;Sim;Não;String;F para física e J para jurídica.;J
+cpfCnpj;cpfCnpj;Sim;Não;String;CPF ou CNPJ do estabelecimento com máscara.;00.000.000/0001-00
+rgInscricaoEstadual;rgInscricaoEstadual;Sim;Não;String;Inscrição estadual.;1234567890
+orgaoEmissor;orgaoEmissor;Sim;Não;String;"Órgão Emissor. (Pode ser vazio, mas não o texto ''null')'';SSP/SP
+ufEmissaoSigla;ufEmissaoSigla;Sim;Não;String;Sigla do estado do Órgão Emissor. (2 letras);SP
+nomeFantasia;nomeFantasia;Sim;Não;String;Nome fantasia.;Exemplo LTDA
+razaoSocial;razaoSocial;Sim;Não;String;Razão social.;RAZAO SOCIAL EXEMPLO LTDA
+ramoAtividadeId;ramoAtividadeId;Sim;Não;Number;ID do ramo de atividade (Inteiro > 0).;132
+segmento;segmento;Sim;Não;Number;Segmento: 0 a 4.;1
+dataConstituicao;dataConstituicao;Sim;Não;Date;Data de constituição no formato yyyy-MM-dd.;2020-01-01
+horaInicio;horaInicio;Não;Sim;String;Hora início de funcionamento no formato HH:mm.;08:00
+horaFim;horaFim;Não;Sim;String;Hora final do funcionamento no formato HH:mm.;18:00
+empresaId;empresaId;Sim;Não;Number;ID da empresa onde o estabelecimento será criado.;536
+canaisVenda;canaisVenda;Sim;Não;Array;Lista de ID's dos canais de venda. Se houver mais de um, use aspas duplas.;''14, 8''
+limite;limite;Não;Sim;Number;Valor do limite global em centavos (sem casas decimais). Ex: 5000 para R$ 50,00.;5000
+agrupamentosIds;agrupamentosIds;Não;Sim;Array;Lista de ID's dos agrupamentos. Se houver mais de um, use aspas duplas.;''14, 8''
+tipoCliente;tipoCliente;Sim;Não;Number;0 - ELETRONICO, 1 - FISICO.;0
+modalidade;modalidade;Sim;Não;Number;0 - Pós-pago e 1 - Pré-pago.;0
+consultorId;consultorId;Não;Sim;Number;ID do consultor. (Obrigatório se areaId estiver vazio).;1206258
+areaId;areaId;Não;Sim;Number;ID da área. (Obrigatório se consultorId estiver vazio).;5
+periodicidade;periodicidade;Sim;Não;Number;ID da periodicidade (0 para Semanal, 1 para Quinzenal, etc.).;0
+diaVisita;diaVisita;Sim;Não;String;''Dia(s) da semana (1-7). Se houver mais de um, use aspas duplas. Ex: '2,3' para Segunda e Terça.'';''2''
+dataVisita;dataVisita;Não;Sim;Date;Data da última visita no formato yyyy-MM-dd.;2024-11-28
+mensagemAtendimento;mensagemAtendimento;Não;Sim;String;Mensagem de primeiro atendimento.;Mensagem Exemplo
+redeid;redeid;Não;Sim;Number;ID da rede que o estabelecimento pertence.;1
+responsavelLimite;responsavelLimite;Não;Sim;Boolean;true ou false.;FALSE
+responsavelCobranca;responsavelCobranca;Não;Sim;Boolean;true ou false.;FALSE
+tipoEmissaoNotaFiscal;tipoEmissaoNotaFiscal;Não;Sim;Number;0 - Não emite, 1 - Única, 2 - Negócio.;0
+emailNFnegocio;emailNFnegocio;Sim;Não;String;E-mail da nota fiscal (Campo Obrigatório, mas String pode ser vazia).;teste@teste.com
+idnegocioNF;idnegocioNF;Sim;Não;Number;Negócio da nota fiscal. (Campo Obrigatório).;1
+emailNFnegocioseg;emailNFnegocioseg;Não;Sim;String;E-mail para nota fiscal secundária.;teste@teste.com
+idnegocioNFseg;idnegocioNFseg;Não;Sim;Number;ID do negócio para nota fiscal secundária.;2
+nomeCS;nomeCS;Sim;Não;String;Nome do sócio do estabelecimento.;Nome Sócio
+tipoPessoaCS;tipoPessoaCS;Sim;Não;String;Tipo de pessoa do Sócio: F ou J.;F
+estadoEmissorCS;estadoEmissorCS;Sim;Não;Number;ID do estado do órgão emissor.;26
+parteSocietariaCS;parteSocietariaCS;Sim;Não;Number;Parte na sociedade (0 a 100).;100
+cnpjRgCS;cnpjRgCS;Sim;Não;String;CPNJ ou CPF do sócio com máscara.;864.560.105-27
+dataNascimentoCS;dataNascimentoCS;Sim;Não;Date;Data de nascimento ou constituição no formato yyyy-MM-dd.;1990-05-15
+orgaoEmissorCS;orgaoEmissorCS;Sim;Não;String;Órgão emissor.;SSP
+inscricaoEstadualCS;inscricaoEstadualCS;Não;Sim;String;Inscrição estadual.;797912220
+nomeCC;nomeCC;Sim;Não;String;Nome do contato.;Nome Contato
+tipoContatoIdCCfone;tipoContatoIdCCfone;Sim;Não;Number;ID do Tipo de contato (Telefone).;21
+fonecontatoCC;fonecontatoCC;Sim;Não;String;Valor do contato (Telefone).;(71)99152-0066
+tipoContatoIdCCemail;tipoContatoIdCCemail;Sim;Não;Number;ID do Tipo de contato (E-mail).;7
+emailcontatoCC;emailcontatoCC;Sim;Não;String;Valor do contato (E-mail).;email@exemplo.com
+principal;principal;Não;Sim;Boolean;Identifica se o item de contato é o principal. true ou false.;TRUE
+recebeCobranca;recebeCobranca;Sim;Não;Boolean;Identifica se o contato receberá boletos. true ou false.;FALSE
+nomeOP;nomeOP;Sim;Não;String;Nome do operador.;operador1
+senhaOP;senhaOP;Sim;Não;String;Senha do operador.;12345
+papeisIdOP;papeisIdOP;Sim;Não;Array;Lista de ID's dos papéis do operador. Se houver mais de um, use aspas duplas.;''396, 400''
+tipoEnderecoIdE;tipoEnderecoIdE;Sim;Não;Number;ID do tipo de endereço (1º Endereço).;1
+cepE;cepE;Sim;Não;String;CEP do estabelecimento (1º Endereço) com máscara.;41.340-215
+bairroIdE;bairroIdE;Não;Sim;Number;ID do bairro (Somente para CEP Único).;2
+logradouroId;logradouroId;Não;Sim;Number;ID do logradouro (Somente para CEP Único).;2
+numeroE;numeroE;Sim;Não;Number;Número do endereço. 0 para sem número.;48
+complementoE;complementoE;Não;Sim;String;Complemento do endereço (1º Endereço).;Casa 3
+tipoEnderecoIdseg;tipoEnderecoIdseg;Sim;Não;Number;ID do tipo de endereço (2º Endereço).;2
+cepEseg;cepEseg;Sim;Não;String;CEP do estabelecimento (2º Endereço) com máscara.;41.340-215
+numeroEseg;numeroEseg;Sim;Não;Number;Número do endereço (2º Endereço).;48
+complementoEseg;complementoEseg;Não;Sim;String;Complemento do endereço (2º Endereço).;Andar 1`;
+
+            const lines = docData.trim().split('\n');
+            // Removida a coluna "Aceita Vazio?"
+            const header = ["Campo", "Nome Tabela", "Obrigatório?", "Aceita Nulo?", "Tipo", "Descrição", "Exemplo"];
+            
+            let html = `
+            <h2>Documentação Detalhada dos Campos</h2>
+            <p>Esta tabela detalha as regras de cada campo, baseada na documentação fornecida.</p>
+            <div style="max-height: 70vh; overflow-y: auto; border: 1px solid #ccc; padding: 10px; background-color: #fff;">
+            <table style="width: 100%; min-width: 1200px; table-layout: auto;">
+                <thead>
+                    <tr>
+            `;
+            
+            header.forEach(h => {
+                html += `<th style="position: sticky; top: 0; background-color: #eaf1f7; font-weight: bold;">${h}</th>`;
+            });
+            
+            html += `</tr></thead><tbody>`;
+
+            lines.slice(1).forEach(line => {
+                // Regex para lidar com o delimitador ';' fora das aspas duplas
+                const cells = line.match(/(".*?"|[^;]+)/g); 
+                // Agora, espera-se 7 células de dados (o 8º elemento foi removido)
+                if (cells && cells.length >= 7) { 
+                    html += `<tr>`;
+                    cells.forEach(cell => {
+                        let content = cell.trim();
+                        // Remove aspas duplas externas
+                        if (content.startsWith('"') && content.endsWith('"')) {
+                            content = content.slice(1, -1).replace(/""/g, '"'); // Trata aspas duplas internas
+                        }
+                        // Destaque para campos obrigatórios ("Sim" e "Não")
+                        if (content.toLowerCase() === 'sim') {
+                             content = `<span style="color: #c0392b; font-weight: bold;">${content}</span>`;
+                        } else if (content.toLowerCase() === 'não' || content.toLowerCase() === 'nã') {
+                            content = `<span style="color: #27ae60; font-weight: bold;">Não</span>`;
+                        }
+                        
+                        html += `<td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: normal;">${content}</td>`;
+                    });
+                    html += `</tr>`;
+                }
+            });
+
+            html += `</tbody></table></div>`;
+            return html;
+        }
+
+        function toggleDocumentation() {
+            const mainView = document.getElementById('mainValidatorView');
+            const docView = document.getElementById('documentationView');
+            const toggleButton = document.getElementById('docBtn');
+
+            if (mainView.style.display === 'none' || !mainView.style.display) {
+                // Switch to Validator
+                mainView.style.display = 'block';
+                docView.style.display = 'none';
+                toggleButton.textContent = 'Ver Documentação de Campos 📚';
+            } else {
+                // Switch to Documentation
+                docView.innerHTML = generateDocumentationHTML();
+                mainView.style.display = 'none';
+                docView.style.display = 'block';
+                toggleButton.textContent = 'Voltar para o Validador 🛠️';
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Portal Sustentacao - Cardway</title>
+  <link rel="icon" href="/image/favicon.ico" type="image/x-icon" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/home.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar collapsed" id="mainSidebar">
+      <div class="sidebar-brand">
+        <a href="/home" class="brand-link">
+          <img src="/image/cardway-logo-DmLFa68k.svg" alt="Cardway" class="brand-logo" />
+          <div class="brand-copy">
+            <span class="brand-kicker">Portal Base</span>
+            <span class="brand-name">Sustentacao</span>
+          </div>
+        </a>
+        <button class="sidebar-collapse-btn" id="sidebarCollapseBtn" title="Alternar menu">
+          <svg class="collapse-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14">
+            <polyline points="15 18 9 12 15 6" />
+          </svg>
+        </button>
+      </div>
+
+      <nav class="sidebar-nav">
+        <a class="nav-item active" data-section="painel" href="#">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="7" height="7" rx="1" />
+            <rect x="14" y="3" width="7" height="7" rx="1" />
+            <rect x="3" y="14" width="7" height="7" rx="1" />
+            <rect x="14" y="14" width="7" height="7" rx="1" />
+          </svg>
+          <span>Painel</span>
+        </a>
+
+        <div class="nav-section-label">Ferramentas</div>
+        <a class="nav-item" data-section="json-format" href="#">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="16 18 22 12 16 6" />
+            <polyline points="8 6 2 12 8 18" />
+          </svg>
+          <span>JSON Identador</span>
+        </a>
+        <a class="nav-item" data-section="sql-concatenador" href="#">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" />
+          </svg>
+          <span>Concatenador SQL</span>
+        </a>
+        <a class="nav-item" data-section="sql-tabela" href="#">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="18" height="18" rx="2" />
+            <path d="M3 9h18M9 21V9" />
+          </svg>
+          <span>SQL -> Tabela</span>
+        </a>
+        <a class="nav-item" data-section="log-pedido" href="#">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+            <polyline points="14 2 14 8 20 8" />
+            <line x1="16" y1="13" x2="8" y2="13" />
+            <line x1="16" y1="17" x2="8" y2="17" />
+            <polyline points="10 9 9 9 8 9" />
+          </svg>
+          <span>Logs de Pedido</span>
+        </a>
+        <a class="nav-item" data-section="log-web" href="#">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10" />
+            <line x1="2" y1="12" x2="22" y2="12" />
+            <path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z" />
+          </svg>
+          <span>Logs Web SGV</span>
+        </a>
+
+        <div class="nav-section-label">Automações</div>
+        <a class="nav-item" data-section="automacoes" href="#">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+          </svg>
+          <span>Atendimento GLPI</span>
+        </a>
+
+        <div class="nav-section-label">Modulos</div>
+        <div class="nav-group open" id="navGroupLancamento">
+          <button class="nav-item nav-group-toggle is-open" id="lancamentoToggle">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+            </svg>
+            <span>Lancamentos</span>
+            <svg class="nav-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="6 9 12 15 18 9" />
+            </svg>
+          </button>
+          <div class="nav-group-menu open" id="lancamentoMenu">
+            <a class="nav-subitem" data-page="/lancamento" href="#"><span>Dashboard</span></a>
+            <a class="nav-subitem" data-page="/lancamento/gerador" href="#"><span>Gerador</span></a>
+            <a class="nav-subitem" data-page="/lancamento/tipos" href="#"><span>Tipos</span></a>
+            <a class="nav-subitem" data-page="/lancamento/mapeamentos" href="#"><span>Mapeamentos</span></a>
+            <a class="nav-subitem" data-page="/lancamento/historico" href="#"><span>Historico</span></a>
+          </div>
+        </div>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="user-row">
+          <div class="user-avatar" id="userAvatar">?</div>
+          <div class="user-details">
+            <span class="user-name" id="userName">Carregando...</span>
+            <span class="user-email" id="userEmail"></span>
+          </div>
+        </div>
+        <button class="btn-logout" id="logoutBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+            <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
+            <polyline points="16 17 21 12 16 7" />
+            <line x1="21" y1="12" x2="9" y2="12" />
+          </svg>
+          <span>Sair</span>
+        </button>
+      </div>
+    </aside>
+
+    <div class="main-layout">
+      <header class="main-header">
+        <div>
+          <p class="page-eyebrow" id="pageEyebrow">Portal base</p>
+          <h1 class="page-title" id="pageTitle">Painel</h1>
+        </div>
+        <div class="header-actions">
+          <button class="page-link-btn hidden" id="pageOpenBtn" type="button">Abrir pagina</button>
+          <div class="session-timer" id="sessionTimer">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13">
+              <circle cx="12" cy="12" r="10" />
+              <polyline points="12 6 12 12 16 14" />
+            </svg>
+            <span id="sessionTimerText">--:--</span>
+          </div>
+        </div>
+      </header>
+
+      <div class="session-alert" id="sessionAlert" hidden>
+        <div class="session-alert-inner">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15">
+            <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+            <line x1="12" y1="9" x2="12" y2="13" />
+            <line x1="12" y1="17" x2="12.01" y2="17" />
+          </svg>
+          <span id="sessionAlertText">Falta pouco para a sessao expirar</span>
+          <button class="btn-renew" id="renewBtn">Renovar</button>
+        </div>
+      </div>
+
+      <main class="main-content">
+        <section id="section-painel" class="section">
+          <div class="hero-card">
+            <div>
+              <p class="hero-kicker">Cardway Sustentacao</p>
+              <h2>Uma base unica para operar o portal inteiro</h2>
+              <p class="hero-copy">
+                O shell principal agora concentra menu, cabecalho e rodape. Ferramentas nativas e modulos
+                operacionais podem conviver no mesmo fluxo, sem duplicar navegacao.
+              </p>
+            </div>
+            <div class="hero-badges">
+              <span class="hero-badge">Shell principal</span>
+              <span class="hero-badge">Ferramentas consolidadas</span>
+              <span class="hero-badge">Modulos incorporados</span>
+            </div>
+          </div>
+
+          <div class="dashboard-grid">
+            <button class="card tool-card" data-section="json-format" type="button">
+              <div class="tool-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6" /><polyline points="8 6 2 12 8 18" /></svg></div>
+              <h3>JSON Identador</h3>
+              <p>Formata e valida JSON com indentacao clara.</p>
+            </button>
+            <button class="card tool-card" data-section="sql-concatenador" type="button">
+              <div class="tool-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" /></svg></div>
+              <h3>Concatenador SQL</h3>
+              <p>Gera clausulas SQL com deduplicacao, blocos e tipos de valor.</p>
+            </button>
+            <button class="card tool-card" data-section="sql-tabela" type="button">
+              <div class="tool-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M3 9h18M9 21V9" /></svg></div>
+              <h3>SQL -> Tabela</h3>
+              <p>Gera CTE com dados literais em PostgreSQL ou Oracle.</p>
+            </button>
+            <button class="card tool-card" data-section="log-pedido" type="button">
+              <div class="tool-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" /><polyline points="14 2 14 8 20 8" /></svg></div>
+              <h3>Logs de Pedido</h3>
+              <p>Busca logs do ms-backoffice a partir do resultado do SQL.</p>
+            </button>
+            <button class="card tool-card" data-section="log-web" type="button">
+              <div class="tool-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10" /><line x1="2" y1="12" x2="22" y2="12" /></svg></div>
+              <h3>Logs Web SGV</h3>
+              <p>Procura termos nos logs web por data, hora e servidor.</p>
+            </button>
+            <button class="card tool-card" data-section="automacoes" type="button">
+              <div class="tool-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg></div>
+              <h3>Atendimento GLPI</h3>
+              <p>Visualize chamados, acione a IA e responda direto do portal.</p>
+            </button>
+            <button class="card tool-card" data-page="/lancamento" type="button">
+              <div class="tool-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" /></svg></div>
+              <h3>Lancamentos</h3>
+              <p>Abre o modulo de lancamento dentro da home, usando o mesmo shell.</p>
+            </button>
+          </div>
+        </section>
+
+        <section id="section-json-format" class="section hidden">
+          <div class="tool-wrapper">
+            <div class="tool-header">
+              <h2>JSON Identador</h2>
+              <p>Cole seu JSON para formatar e validar.</p>
+            </div>
+            <div class="form-group">
+              <label for="jsonInput">JSON de entrada</label>
+              <textarea id="jsonInput" rows="10" placeholder='{"chave": "valor"}'></textarea>
+            </div>
+            <div class="btn-row">
+              <button class="btn btn-primary" id="jsonFormatBtn" type="button">Identar</button>
+              <button class="btn btn-ghost" id="jsonClearBtn" type="button">Limpar</button>
+            </div>
+            <div id="jsonError" class="error-inline hidden"></div>
+            <div id="jsonResult" class="result-block hidden">
+              <div class="result-header">
+                <span class="result-meta">JSON formatado</span>
+                <button class="btn-copy" id="jsonCopyBtn" type="button">Copiar</button>
+              </div>
+              <pre class="result-pre" id="jsonResultPre"></pre>
+            </div>
+          </div>
+        </section>
+
+        <section id="section-sql-concatenador" class="section hidden">
+          <div class="tool-wrapper tool-wrapper--wide">
+            <div class="tool-header">
+              <h2>Concatenador SQL</h2>
+              <p>Converte listas em clausulas SQL com deduplicacao, ordenacao, contadores e SELECT completo.</p>
+            </div>
+            <div class="concat-summary-grid">
+              <article class="mod-mini-card concat-summary-card"><span class="mod-mini-label">Total</span><strong id="concatTotalStat" class="mod-mini-value">—</strong></article>
+              <article class="mod-mini-card concat-summary-card"><span class="mod-mini-label">Unicos</span><strong id="concatUniqueStat" class="mod-mini-value">—</strong></article>
+              <article class="mod-mini-card concat-summary-card"><span class="mod-mini-label">Duplicados</span><strong id="concatDuplicateStat" class="mod-mini-value">—</strong></article>
+              <article class="mod-mini-card concat-summary-card"><span class="mod-mini-label">Tipo detectado</span><strong id="concatTypeStat" class="mod-mini-value">—</strong></article>
+              <article class="mod-mini-card concat-summary-card"><span class="mod-mini-label">Blocos</span><strong id="concatBlocksStat" class="mod-mini-value">—</strong></article>
+            </div>
+            <div class="concat-controls">
+              <div class="concat-grid">
+                <div class="form-group">
+                  <label for="concatColumn">Nome da coluna</label>
+                  <input type="text" id="concatColumn" placeholder="Ex: id_cliente" />
+                </div>
+                <div class="form-group">
+                  <label for="concatTable">Nome da tabela</label>
+                  <input type="text" id="concatTable" placeholder="Ex: clientes" />
+                </div>
+                <div class="form-group">
+                  <label for="concatClause">Clausula</label>
+                  <select id="concatClause" class="glpi-select">
+                    <option value="in">IN</option>
+                    <option value="not-in">NOT IN</option>
+                    <option value="any">= ANY(ARRAY[])</option>
+                    <option value="all"><> ALL(ARRAY[])</option>
+                  </select>
+                </div>
+              </div>
+              <div class="concat-grid concat-grid--options">
+                <div class="form-group">
+                  <label for="concatBlockSize">Tamanho do bloco</label>
+                  <input type="number" id="concatBlockSize" min="1" step="1" value="1000" />
+                </div>
+                <div class="concat-switches">
+                  <label class="concat-switch"><input type="checkbox" id="concatDedupe" checked /><span>Remover duplicados</span></label>
+                  <label class="concat-switch"><input type="checkbox" id="concatSort" /><span>Ordenar valores</span></label>
+                  <label class="concat-switch"><input type="checkbox" id="concatFullSelect" /><span>Gerar SELECT completo</span></label>
+                </div>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="concatValues">Valores (1 por linha)</label>
+              <textarea id="concatValues" rows="8" placeholder="123&#10;456&#10;789"></textarea>
+            </div>
+            <div class="concat-mode-bar">
+              <span id="concatModeInfo" class="concat-mode-info">Detectado: —</span>
+              <div class="btn-row btn-row--tight">
+                <button class="btn btn-ghost concat-mode-btn active" id="concatBtnAuto" data-concat-mode="auto" type="button">Auto</button>
+                <button class="btn btn-ghost concat-mode-btn" id="concatBtnString" data-concat-mode="string" type="button">String</button>
+                <button class="btn btn-ghost concat-mode-btn" id="concatBtnNumber" data-concat-mode="number" type="button">Numero</button>
+                <button class="btn btn-ghost" id="concatClearBtn" type="button">Limpar</button>
+              </div>
+            </div>
+            <div class="btn-row">
+              <button class="btn btn-primary" id="concatGenerateBtn" type="button">Gerar SQL</button>
+            </div>
+            <div id="concatResult" class="result-block hidden">
+              <div class="result-header">
+                <span class="result-meta" id="concatResultCount">Pronto para gerar</span>
+                <button class="btn-copy" id="concatCopyBtn" type="button">Copiar resultado</button>
+              </div>
+              <pre class="result-pre" id="concatResultPre"></pre>
+            </div>
+          </div>
+        </section>
+
+        <section id="section-sql-tabela" class="section hidden">
+          <div class="tool-wrapper tool-wrapper--wide">
+            <div class="tool-header">
+              <h2>SQL -> Tabela</h2>
+              <p>Gera uma CTE com dados literais, colunas dinamicas e tipagem por coluna.</p>
+            </div>
+            <div class="cte-top-row">
+              <div class="form-group">
+                <label for="cteName">Nome da CTE</label>
+                <input type="text" id="cteName" placeholder="Ex: dados" />
+              </div>
+              <div class="form-group">
+                <label for="cteDialect">Dialeto</label>
+                <select id="cteDialect" class="glpi-select">
+                  <option value="postgres">PostgreSQL / ANSI</option>
+                  <option value="oracle">Oracle (FROM DUAL)</option>
+                </select>
+              </div>
+            </div>
+            <div class="cte-cols-area">
+              <div class="cte-cols-container" id="cteColsContainer"></div>
+              <button class="btn btn-ghost cte-add-col-btn" id="cteAddColBtn" type="button">+ Adicionar coluna</button>
+            </div>
+            <div id="cteError" class="error-inline hidden"></div>
+            <div class="btn-row">
+              <button class="btn btn-primary" id="cteGenerateBtn" type="button">Gerar SQL</button>
+              <button class="btn btn-ghost" id="cteClearBtn" type="button">Limpar</button>
+            </div>
+            <div id="cteResult" class="result-block hidden">
+              <div class="result-header">
+                <span class="result-meta" id="cteResultCount"></span>
+                <button class="btn-copy" id="cteCopyBtn" type="button">Copiar</button>
+              </div>
+              <pre class="result-pre" id="cteResultPre"></pre>
+            </div>
+          </div>
+        </section>
+
+        <section id="section-log-pedido" class="section hidden">
+          <div class="tool-wrapper">
+            <div class="tool-header">
+              <h2>Logs de Pedido</h2>
+              <p>Cole o resultado do SELECT para buscar os logs do ms-backoffice.</p>
+            </div>
+            <div class="form-group">
+              <label for="logService">Servico</label>
+              <select id="logService" class="glpi-select">
+                <option value="api">api</option>
+                <option value="api-cobranca-baixa">api-cobranca-baixa</option>
+                <option value="cobrancabaixa">cobrancabaixa</option>
+                <option value="cobrancapix">cobrancapix</option>
+                <option value="dicionario">dicionario</option>
+                <option value="distribuicao">distribuicao</option>
+                <option value="logistica">logistica</option>
+                <option value="pedido" selected>pedido</option>
+                <option value="portal">portal</option>
+                <option value="relatorio">relatorio</option>
+                <option value="sig">sig</option>
+                <option value="sigvivo">sigvivo</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="logInput">Resultado do SELECT</label>
+              <textarea id="logInput" rows="10" placeholder="369289 07/04/26 14:28:06 api-backoffice"></textarea>
+            </div>
+            <div class="btn-row">
+              <button class="btn btn-primary" id="logSearchBtn" type="button">Buscar Logs</button>
+              <button class="btn btn-ghost" id="logClearBtn" type="button">Limpar</button>
+            </div>
+            <div id="logStatus" class="log-status" hidden></div>
+            <button class="btn btn-ghost btn-download" id="logDownloadBtn" type="button" hidden>Baixar TXT</button>
+            <div id="logResults" class="log-results"></div>
+          </div>
+        </section>
+
+        <section id="section-log-web" class="section hidden">
+          <div class="tool-wrapper">
+            <div class="tool-header">
+              <h2>Logs Web SGV</h2>
+              <p>Busca qualquer termo nos logs dos servidores web por data e hora.</p>
+            </div>
+            <div class="form-group">
+              <label for="webLogTerm">Termo de busca</label>
+              <input type="text" id="webLogTerm" placeholder="Ex: 369289, NullPointerException..." />
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="webLogDate">Data</label>
+                <input type="text" id="webLogDate" placeholder="07/04/2026" maxlength="10" />
+              </div>
+              <div class="form-group">
+                <label for="webLogHour">Hora (opcional)</label>
+                <input type="text" id="webLogHour" placeholder="14" maxlength="2" class="input-sm" />
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Servidores</label>
+              <div class="checkbox-row">
+                <label class="checkbox-label"><input type="checkbox" name="webServer" value="web02" checked /> web02</label>
+                <label class="checkbox-label"><input type="checkbox" name="webServer" value="web03" checked /> web03</label>
+              </div>
+            </div>
+            <div class="btn-row">
+              <button class="btn btn-primary" id="webLogSearchBtn" type="button">Buscar Logs</button>
+              <button class="btn btn-danger" id="webLogStopBtn" type="button" hidden>Parar</button>
+              <button class="btn btn-ghost" id="webLogClearBtn" type="button">Limpar</button>
+            </div>
+            <div id="webLogStatus" class="log-status" hidden></div>
+            <button class="btn btn-ghost btn-download" id="webLogDownloadBtn" type="button" hidden>Baixar TXT</button>
+            <div id="webLogResults" class="log-results"></div>
+          </div>
+        </section>
+
+        <section id="section-automacoes" class="section hidden">
+          <div class="glpi-tabs">
+            <button class="glpi-tab active" data-tab="chamados" type="button">Chamados</button>
+            <button class="glpi-tab" data-tab="agente" type="button">Agente IA</button>
+          </div>
+
+          <div id="tab-chamados">
+            <div class="automacoes-header">
+              <div>
+                <h2 class="automacoes-title">Chamados GLPI</h2>
+                <p class="automacoes-sub">Chamados abertos monitorados em tempo real</p>
+              </div>
+              <div class="automacoes-controls">
+                <select id="glpiStatusFilter" class="glpi-select">
+                  <option value="">Todos os status</option>
+                  <option value="1" selected>Novo</option>
+                  <option value="2">Em atendimento (atribuido)</option>
+                  <option value="3">Em atendimento (planejado)</option>
+                  <option value="4">Pendente</option>
+                  <option value="5">Resolvido</option>
+                </select>
+                <select id="glpiAssignedFilter" class="glpi-select">
+                  <option value="">Todos os tecnicos</option>
+                </select>
+                <button class="btn btn-ghost" id="glpiRefreshBtn" type="button">Atualizar</button>
+              </div>
+            </div>
+            <div id="glpiError" class="error-inline hidden"></div>
+            <div id="glpiLoading" class="glpi-loading hidden">
+              <div class="glpi-spinner"></div>
+              <span>Buscando chamados no GLPI...</span>
+            </div>
+            <div id="glpiEmpty" class="glpi-empty hidden">
+              <p>Nenhum chamado encontrado para o filtro selecionado</p>
+            </div>
+            <div class="glpi-table-wrap" id="glpiTableWrap">
+              <table class="glpi-table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Titulo</th>
+                    <th>Status</th>
+                    <th>Prioridade</th>
+                    <th>Aberto em</th>
+                  </tr>
+                </thead>
+                <tbody id="glpiTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div id="tab-agente" hidden>
+            <div class="agent-header">
+              <div>
+                <h2 class="agent-title">Agente de Sustentacao IA</h2>
+                <p class="agent-sub">Analise tickets, proponha acoes e aprove tudo sem sair do portal.</p>
+              </div>
+              <div class="agent-controls">
+                <select id="agentStatusFilter" class="glpi-select">
+                  <option value="1" selected>Novo</option>
+                  <option value="2">Em atendimento (atribuido)</option>
+                  <option value="4">Pendente</option>
+                  <option value="">Todos</option>
+                </select>
+                <button class="btn btn-primary" id="agentRunBtn" type="button">Rodar Agente</button>
+                <button class="btn btn-ghost" id="agentStopBtn" type="button" disabled>Parar</button>
+              </div>
+            </div>
+            <div class="agent-layout">
+              <div class="agent-terminal-card">
+                <div class="agent-terminal-bar">
+                  <div class="agent-dots">
+                    <span class="agent-dot agent-dot-red"></span>
+                    <span class="agent-dot agent-dot-yellow"></span>
+                    <span class="agent-dot agent-dot-green"></span>
+                  </div>
+                  <span class="agent-bar-title">IA de Sustentacao</span>
+                </div>
+                <div class="agent-terminal" id="agentTerminal">
+                  <div id="agentTerminalBody">
+                    <span class="agent-line dim">Aguardando inicio do agente...</span>
+                  </div>
+                </div>
+              </div>
+              <div class="agent-results-card">
+                <div class="agent-results-hdr">Chamados analisados</div>
+                <div id="agentResultsEmpty" class="agent-results-empty">Nenhum chamado analisado ainda</div>
+                <div id="agentResultsList"></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="section-page-host" class="section hidden">
+          <div class="page-host-card">
+            <div class="page-host-toolbar">
+              <div>
+                <p class="page-host-kicker">Pagina incorporada</p>
+                <h2 id="embeddedPageTitle">Modulo</h2>
+              </div>
+              <div class="page-host-actions">
+                <span class="page-host-path" id="embeddedPagePath"></span>
+              </div>
+            </div>
+            <div class="page-host-frame-wrap">
+              <iframe id="contentFrame" class="content-frame" title="Conteudo do portal"></iframe>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <footer class="main-footer">
+        <span>Portal Sustentacao Cardway</span>
+        <span>Base unica de navegacao para modulos e ferramentas</span>
+      </footer>
+    </div>
+  </div>
+
+  <div id="ticketDrawer" hidden>
+    <div class="ticket-drawer-overlay" id="ticketDrawerOverlay"></div>
+    <div class="ticket-drawer-panel">
+      <div class="ticket-drawer-header">
+        <div>
+          <div class="ticket-drawer-id" id="drawerTicketId"></div>
+          <div class="ticket-drawer-title" id="drawerTicketTitle"></div>
+        </div>
+        <button class="ticket-drawer-close" id="ticketDrawerClose" title="Fechar" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
+      </div>
+      <div class="ticket-drawer-meta" id="drawerTicketMeta"></div>
+      <div class="ticket-drawer-body">
+        <div class="ai-timeline" id="aiTimeline"></div>
+        <div id="aiAnalysisResult" hidden class="ai-analysis-card">
+          <div class="ai-analysis-row"><div class="ai-analysis-label">Tipo</div><div class="ai-analysis-value" id="aiTipo"></div></div>
+          <div class="ai-analysis-row"><div class="ai-analysis-label">Analise</div><div class="ai-analysis-value" id="aiAnalise"></div></div>
+          <div class="ai-analysis-row"><div class="ai-analysis-label">Acao sugerida</div><div class="ai-analysis-value" id="aiAcao"></div></div>
+          <div class="ai-analysis-row"><div class="ai-analysis-label">Risco</div><div class="ai-analysis-value" id="aiRisco"></div></div>
+          <div class="ai-analysis-row"><div class="ai-analysis-label">Confianca</div><div class="ai-analysis-value" id="aiConfianca"></div></div>
+        </div>
+        <div id="aiApprovalSection" hidden class="ai-approval-section">
+          <p class="ai-approval-label">A acao sugerida pela IA aguarda aprovacao do analista:</p>
+          <div class="ai-approval-actions">
+            <button class="btn btn-primary" id="approveBtn" type="button">Aprovar e Executar</button>
+            <button class="btn btn-ghost" id="assumeBtn" type="button">Assumir manualmente</button>
+          </div>
+        </div>
+        <div id="feedbackSection" hidden class="ai-feedback-section">
+          <label for="feedbackInput">O que a IA deveria ter feito?</label>
+          <textarea id="feedbackInput" rows="3" placeholder="Descreva a acao correta para a IA aprender..."></textarea>
+          <button class="btn btn-ghost" id="feedbackSubmitBtn" type="button">Enviar feedback</button>
+        </div>
+      </div>
+      <div class="ticket-drawer-footer">
+        <button class="btn btn-primary" id="drawerAnalyzeBtn" type="button">Analisar com IA</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/home.js"></script>
+</body>
+</html>
