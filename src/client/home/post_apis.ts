@@ -194,8 +194,21 @@ function populateKvTable(tbody: HTMLTableSectionElement, pairs: KVPair[]): void 
 }
 
 // ---- Runner preview & results ----
-interface RunnerResult { iter: number; name: string; method: string; url: string; status: number | null; duration: number | null; error: string; response: string; responsePreview: string }
+interface RunnerResult {
+  iter: number
+  name: string
+  method: string
+  url: string
+  status: number | null
+  duration: number | null
+  error: string
+  requestBody: string
+  requestBodyPreview: string
+  response: string
+  responsePreview: string
+}
 let runnerResults: RunnerResult[] = []
+let currentResponseBody = ''
 
 function summarizeRunnerResponse(body: string): string {
   const normalized = tryJson(body).replace(/\s+/g, ' ').trim()
@@ -206,6 +219,17 @@ function summarizeRunnerResponse(body: string): string {
 function normalizeRunnerResponse(body: string): string {
   const normalized = tryJson(body).trim()
   return normalized || 'Sem resposta'
+}
+
+function summarizeCodeBlock(body: string, emptyLabel: string): string {
+  const normalized = tryJson(body).replace(/\s+/g, ' ').trim()
+  if (!normalized) return emptyLabel
+  return normalized.length > 140 ? `${normalized.slice(0, 137)}...` : normalized
+}
+
+function normalizeCodeBlock(body: string, emptyLabel: string): string {
+  const normalized = tryJson(body).trim()
+  return normalized || emptyLabel
 }
 
 function getSelectedRunnerRequestIds(collectionId: number, allEntries: RunnerRequestEntry[]): Set<string> {
@@ -367,16 +391,96 @@ function renderRunnerPreview(): void {
   panel.hidden = false
 }
 
+function renderNumberedCode(container: HTMLElement, content: string): void {
+  container.innerHTML = ''
+  const normalized = content.replace(/\r\n/g, '\n')
+  const lines = normalized.length > 0 ? normalized.split('\n') : ['']
+  const frag = document.createDocumentFragment()
+  lines.forEach((line, index) => {
+    const row = document.createElement('div')
+    row.className = 'at-code-line'
+    const number = document.createElement('span')
+    number.className = 'at-code-line-no'
+    number.textContent = String(index + 1)
+    const text = document.createElement('span')
+    text.className = 'at-code-line-text'
+    text.textContent = line || ' '
+    row.appendChild(number)
+    row.appendChild(text)
+    frag.appendChild(row)
+  })
+  container.appendChild(frag)
+}
+
+function getSelectedCodeText(): string {
+  const selection = window.getSelection()
+  return selection?.toString().trim() ?? ''
+}
+
+function openCodeModal(title: string, content: string): void {
+  el<HTMLHeadingElement>('atCodeModalTitle').textContent = title
+  const body = content.trim() ? tryJson(content) : 'Sem conteúdo'
+  el<HTMLTextAreaElement>('atCodeModalRaw').value = body
+  renderNumberedCode(el<HTMLDivElement>('atCodeModalViewer'), body)
+  el('atCodeModal').hidden = false
+}
+
+async function copyCodeSelection(): Promise<void> {
+  const selected = getSelectedCodeText()
+  if (!selected) {
+    showToast('Selecione um trecho antes de copiar.', 'error')
+    return
+  }
+  await navigator.clipboard.writeText(selected)
+  showToast('Trecho copiado.')
+}
+
+function buildRunnerDetailCell(preview: string, full: string, modalTitle: string): HTMLTableCellElement {
+  const cell = document.createElement('td')
+  cell.className = 'at-runner-detail-cell'
+
+  const copy = document.createElement('div')
+  copy.className = 'at-runner-detail-copy'
+
+  const previewEl = document.createElement('div')
+  previewEl.className = 'at-runner-response'
+  previewEl.textContent = preview
+
+  const actions = document.createElement('div')
+  actions.className = 'at-runner-detail-actions'
+
+  const viewBtn = document.createElement('button')
+  viewBtn.type = 'button'
+  viewBtn.className = 'btn btn-ghost btn-xs'
+  viewBtn.textContent = 'Expandir'
+  viewBtn.addEventListener('click', () => openCodeModal(modalTitle, full))
+
+  const copyBtn = document.createElement('button')
+  copyBtn.type = 'button'
+  copyBtn.className = 'btn btn-ghost btn-xs'
+  copyBtn.textContent = 'Copiar'
+  copyBtn.addEventListener('click', () => {
+    void navigator.clipboard.writeText(full).then(() => showToast('Conteúdo copiado.'))
+  })
+
+  actions.appendChild(viewBtn)
+  actions.appendChild(copyBtn)
+  copy.appendChild(previewEl)
+  copy.appendChild(actions)
+  cell.appendChild(copy)
+  return cell
+}
+
 function exportRunnerResults(format: 'csv' | 'xlsx'): void {
   if (runnerResults.length === 0) { showToast('Nenhum resultado para exportar.', 'error'); return }
-  const headers = ['#', 'Nome', 'Método', 'URL', 'Status', 'Tempo(ms)', 'Erro', 'Resposta']
+  const headers = ['#', 'Nome', 'Método', 'URL', 'Status', 'Tempo(ms)', 'Erro', 'Body enviado', 'Resposta']
   if (format === 'csv') {
-    const rows = runnerResults.map(r => [r.iter, `"${r.name.replace(/"/g,'""')}"`, r.method, `"${r.url.replace(/"/g,'""')}"`, r.status ?? '', r.duration ?? '', `"${r.error.replace(/"/g,'""')}"`, `"${r.response.replace(/"/g,'""')}"`].join(','))
+    const rows = runnerResults.map(r => [r.iter, `"${r.name.replace(/"/g,'""')}"`, r.method, `"${r.url.replace(/"/g,'""')}"`, r.status ?? '', r.duration ?? '', `"${r.error.replace(/"/g,'""')}"`, `"${r.requestBody.replace(/"/g,'""')}"`, `"${r.response.replace(/"/g,'""')}"`].join(','))
     const csv = [headers.join(','), ...rows].join('\r\n')
     const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' })); a.download = `runner_${Date.now()}.csv`; a.click(); URL.revokeObjectURL(a.href)
   } else {
     const wb = XLSX.utils.book_new()
-    const ws = XLSX.utils.aoa_to_sheet([headers, ...runnerResults.map(r => [r.iter, r.name, r.method, r.url, r.status ?? '', r.duration ?? '', r.error, r.response])])
+    const ws = XLSX.utils.aoa_to_sheet([headers, ...runnerResults.map(r => [r.iter, r.name, r.method, r.url, r.status ?? '', r.duration ?? '', r.error, r.requestBody, r.response])])
     XLSX.utils.book_append_sheet(wb, ws, 'Resultados')
     XLSX.writeFile(wb, `runner_${Date.now()}.xlsx`)
   }
@@ -696,7 +800,7 @@ function applyAuthToRequest(url: string, headers: Record<string, string>, auth: 
   }
   return { url, headers }
 }
-async function execProxy(req: ApiRequest, vars?: Record<string,string>): Promise<ProxyResult> {
+function prepareProxyRequest(req: ApiRequest, vars?: Record<string,string>): { url: string; headers: Record<string, string>; body: string | undefined } {
   const applyVars = (s: string) => vars ? subst(s, vars) : s
   let url = buildUrlWithParams(applyVars(req.url), req.params.map(p => vars ? { ...p, key: applyVars(p.key), value: applyVars(p.value) } : p))
   const headers = buildHeaders(req.headers.map(h => vars ? { ...h, key: applyVars(h.key), value: applyVars(h.value) } : h))
@@ -705,6 +809,10 @@ async function execProxy(req: ApiRequest, vars?: Record<string,string>): Promise
   if (req.body.type === 'json' && !headerKeyExists(headers, 'Content-Type')) headers['Content-Type'] = 'application/json'
   if (req.body.type === 'form' && !headerKeyExists(headers, 'Content-Type')) headers['Content-Type'] = 'application/x-www-form-urlencoded'
   const body = req.body.type !== 'none' ? applyVars(req.body.content) : undefined
+  return { url, headers, body }
+}
+async function execProxy(req: ApiRequest, vars?: Record<string,string>): Promise<ProxyResult> {
+  const { url, headers, body } = prepareProxyRequest(req, vars)
   const res = await fetch('/api/post_apis/proxy', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ method: req.method, url, headers, body }) })
   const json = (await res.json()) as { success: boolean; data?: ProxyResult; error?: string }
   if (!json.success || !json.data) throw new Error(json.error ?? 'Erro ao executar requisição')
@@ -733,6 +841,7 @@ async function sendRequest(): Promise<void> {
 function clearResponse(): void {
   el('atRespBodyWrap').hidden = true; el('atRespError').hidden = true; el('atRespIdle').hidden = false
   el<HTMLButtonElement>('atRespHtmlTab').hidden = true
+  currentResponseBody = ''
 }
 function showRespError(msg: string): void { el('atRespError').textContent = msg; el('atRespError').hidden = false; el('atRespBodyWrap').hidden = true; el('atRespIdle').hidden = true }
 function showResponse(result: ProxyResult): void {
@@ -740,7 +849,8 @@ function showResponse(result: ProxyResult): void {
   const statusEl = el<HTMLSpanElement>('atRespStatus'); statusEl.textContent = `${result.status} ${result.statusText}`; statusEl.className = `at-status-badge ${statusClass(result.status)}`
   el('atRespTime').textContent = formatDuration(result.duration); el('atRespSize').textContent = formatSize(result.size)
   const ct = result.headers['content-type'] ?? ''
-  el<HTMLPreElement>('atRespBodyPre').textContent = tryJson(result.body)
+  currentResponseBody = tryJson(result.body)
+  renderNumberedCode(el<HTMLDivElement>('atRespBodyPre'), currentResponseBody)
   const isHtml = ct.includes('html')
   const htmlTab = el<HTMLButtonElement>('atRespHtmlTab')
   htmlTab.hidden = !isHtml
@@ -958,25 +1068,33 @@ async function runCollection(collectionId: number): Promise<void> {
       if (runnerStop) break
       const req = allReqs[i]!
       const runtimeVars = applyRequestScript(req, vars)
+      const prepared = prepareProxyRequest(req, runtimeVars)
+      const requestBodyFull = normalizeCodeBlock(prepared.body ?? '', 'Sem body enviado')
+      const requestBodyPreview = summarizeCodeBlock(prepared.body ?? '', 'Sem body enviado')
       const iterLabel = dataRows.length > 1 ? `[${rowIdx+1}/${dataRows.length}] ` : ''
       const tr = document.createElement('tr')
-      const responseCellEl = document.createElement('td')
-      responseCellEl.className = 'at-runner-response'
-      responseCellEl.textContent = '—'
-      tr.innerHTML = `<td>${esc(iterLabel)}${i+1}</td><td title="${esc(req.name)}">${esc(req.name||'Sem nome')}</td><td><span class="at-method-badge at-method-${req.method.toLowerCase()}">${req.method}</span></td><td class="at-runner-url" title="${esc(req.url)}">${esc(req.url)}</td><td><span class="at-runner-spinner">⌛</span></td><td>—</td>`
-      tr.appendChild(responseCellEl)
+      tr.innerHTML = `<td>${esc(iterLabel)}${i+1}</td><td title="${esc(req.name)}">${esc(req.name||'Sem nome')}</td><td><span class="at-method-badge at-method-${req.method.toLowerCase()}">${req.method}</span></td><td class="at-runner-url" title="${esc(prepared.url)}">${esc(prepared.url)}</td><td><span class="at-runner-spinner">⌛</span></td><td>—</td>`
+      const requestCell = buildRunnerDetailCell(requestBodyPreview, requestBodyFull, `Body enviado - ${req.name || req.url || 'Runner'}`)
+      const responseCell = buildRunnerDetailCell('Processando...', 'Processando...', `Resposta - ${req.name || req.url || 'Runner'}`)
+      tr.appendChild(requestCell)
+      tr.appendChild(responseCell)
       tbody.appendChild(tr); tr.scrollIntoView({ block: 'nearest' })
-      const cells = tr.querySelectorAll('td'); const statusCell = cells[4]!; const timeCell = cells[5]!; const responseCell = cells[6]!
-      const result: RunnerResult = { iter: done + 1, name: req.name || 'Sem nome', method: req.method, url: req.url, status: null, duration: null, error: '', response: '', responsePreview: '' }
+
+      const cells = tr.querySelectorAll('td'); const statusCell = cells[4]!; const timeCell = cells[5]!
+      const responsePreviewEl = responseCell.querySelector<HTMLElement>('.at-runner-response')
+      const responseButtons = responseCell.querySelectorAll<HTMLButtonElement>('button')
+      const result: RunnerResult = { iter: done + 1, name: req.name || 'Sem nome', method: req.method, url: prepared.url, status: null, duration: null, error: '', requestBody: requestBodyFull, requestBodyPreview, response: '', responsePreview: '' }
       try {
         const r = await execProxy(req, runtimeVars)
         const responseFull = normalizeRunnerResponse(r.body)
         const responseSummary = summarizeRunnerResponse(r.body)
         statusCell.innerHTML = `<span class="at-status-badge ${statusClass(r.status)}">${r.status}</span>`
         timeCell.textContent = String(r.duration)
-        responseCell.textContent = responseSummary
+        if (responsePreviewEl) responsePreviewEl.textContent = responseSummary
+        if (responseButtons[0]) responseButtons[0].onclick = () => openCodeModal(`Resposta - ${req.name || req.url || 'Runner'}`, responseFull)
+        if (responseButtons[1]) responseButtons[1].onclick = () => { void navigator.clipboard.writeText(responseFull).then(() => showToast('Conteúdo copiado.')) }
         result.status = r.status; result.duration = r.duration; result.response = responseFull; result.responsePreview = responseSummary
-        addConsoleEntry({ method: req.method, url: req.url, status: r.status, duration: r.duration, responsePreview: responseSummary })
+        addConsoleEntry({ method: req.method, url: prepared.url, status: r.status, duration: r.duration, responsePreview: responseSummary })
         if (r.status >= 400) {
           result.error = `HTTP ${r.status}`
           failed++
@@ -986,11 +1104,13 @@ async function runCollection(collectionId: number): Promise<void> {
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : 'Erro'
         statusCell.innerHTML = `<span class="at-status-badge at-status-5xx">${esc(msg.slice(0,30))}</span>`; timeCell.textContent = '—'
-        responseCell.textContent = msg
+        if (responsePreviewEl) responsePreviewEl.textContent = msg
+        if (responseButtons[0]) responseButtons[0].onclick = () => openCodeModal(`Erro - ${req.name || req.url || 'Runner'}`, msg)
+        if (responseButtons[1]) responseButtons[1].onclick = () => { void navigator.clipboard.writeText(msg).then(() => showToast('Conteúdo copiado.')) }
         result.error = msg
         result.response = msg
         result.responsePreview = msg
-        addConsoleEntry({ method: req.method, url: req.url, status: null, duration: null, responsePreview: msg, error: msg }); failed++
+        addConsoleEntry({ method: req.method, url: prepared.url, status: null, duration: null, responsePreview: msg, error: msg }); failed++
       }
       runnerResults.push(result); done++; upd()
     }
@@ -1224,9 +1344,14 @@ export function initPostApisTool(): void {
   el<HTMLSelectElement>('atAuthType').addEventListener('change', updateAuthVisibility)
   document.querySelectorAll<HTMLInputElement>('input[name="atBodyType"]').forEach(r => r.addEventListener('change', updateBodyVisibility)); updateBodyVisibility(); loadAuth(currentRequest.auth)
   el<HTMLButtonElement>('atRespCopyBtn').addEventListener('click', () => {
-    const text = el<HTMLPreElement>('atRespBodyPre').textContent ?? ''
+    const text = currentResponseBody
     void navigator.clipboard.writeText(text).then(() => { const btn = el<HTMLButtonElement>('atRespCopyBtn'); btn.textContent = 'Copiado!'; setTimeout(() => { btn.textContent = 'Copiar' }, 1500) })
   })
+  el<HTMLButtonElement>('atCodeModalClose').addEventListener('click', () => { el('atCodeModal').hidden = true })
+  el<HTMLButtonElement>('atCodeModalCopyAll').addEventListener('click', () => {
+    void navigator.clipboard.writeText(el<HTMLTextAreaElement>('atCodeModalRaw').value).then(() => showToast('Conte�do copiado.'))
+  })
+  el<HTMLButtonElement>('atCodeModalCopySelection').addEventListener('click', () => { void copyCodeSelection() })
   el<HTMLButtonElement>('atNewCollectionBtn').addEventListener('click', async () => { const n = await showPrompt('Nome da coleção:'); if (n) void createCollection(n) })
   el<HTMLButtonElement>('atCurlBtn').addEventListener('click', showCurlModal)
   el<HTMLButtonElement>('atCurlModalClose').addEventListener('click', () => { el('atCurlModal').hidden = true })
@@ -1329,3 +1454,5 @@ export function initPostApisTool(): void {
 
   void loadCollections()
 }
+
+

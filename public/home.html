@@ -655,7 +655,7 @@
               </div>
               <div class="at-runner-table-wrap">
                 <table class="at-runner-table">
-                  <thead><tr><th>#</th><th>Nome</th><th>Método</th><th>URL</th><th>Status</th><th>Tempo(ms)</th><th>Resposta</th></tr></thead>
+                  <thead><tr><th>#</th><th>Nome</th><th>Método</th><th>URL</th><th>Status</th><th>Tempo(ms)</th><th>Body enviado</th><th>Resposta</th></tr></thead>
                   <tbody id="atRunnerTbody"></tbody>
                 </table>
               </div>
@@ -675,6 +675,21 @@
               </div>
               <pre id="atCurlPre" class="at-curl-pre"></pre>
               <button id="atCurlCopy" class="btn btn-ghost btn-sm" style="width:100%;margin-top:8px" type="button">Copiar</button>
+            </div>
+          </div>
+
+          <div class="at-code-modal" id="atCodeModal" hidden>
+            <div class="at-code-modal-inner">
+              <div class="at-code-modal-head">
+                <span id="atCodeModalTitle">Detalhe</span>
+                <button id="atCodeModalClose" class="at-save-modal-close" type="button">×</button>
+              </div>
+              <div class="at-code-modal-actions">
+                <button id="atCodeModalCopyAll" class="btn btn-ghost btn-sm" type="button">Copiar tudo</button>
+                <button id="atCodeModalCopySelection" class="btn btn-ghost btn-sm" type="button">Copiar seleção</button>
+              </div>
+              <div id="atCodeModalViewer" class="at-code-viewer"></div>
+              <textarea id="atCodeModalRaw" hidden></textarea>
             </div>
           </div>
 
@@ -883,7 +898,7 @@
                     <button class="btn-copy" id="atRespCopyBtn" type="button">Copiar</button>
                   </div>
                   <div id="atRespPaneBody" class="at-resp-pane">
-                    <pre class="at-resp-pre" id="atRespBodyPre"></pre>
+                    <div class="at-code-viewer at-inline-code-viewer" id="atRespBodyPre"></div>
                   </div>
                   <div id="atRespPaneHeaders" class="at-resp-pane hidden">
                     <table class="at-kv-table" id="atRespHeadersTable"></table>
@@ -1009,3 +1024,4 @@
   <script src="/js/home.js"></script>
 </body>
 </html>
+
