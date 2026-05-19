@@ -2116,6 +2116,11 @@ textarea:focus,
 
 .at-body-textarea:focus { border-color: var(--accent); }
 
+.at-scripts-textarea {
+  min-height: 220px;
+  margin-top: 10px;
+}
+
 .at-auth-panel {
   display: flex;
   flex-direction: column;

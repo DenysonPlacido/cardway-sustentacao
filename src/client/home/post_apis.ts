@@ -11,7 +11,7 @@ interface ApiRequestAuth {
   apiKeyValue: string
   apiKeyAddTo: 'header' | 'query'
 }
-interface ApiRequest { id: string; name: string; method: string; url: string; params: KVPair[]; headers: KVPair[]; body: ApiRequestBody; auth: ApiRequestAuth }
+interface ApiRequest { id: string; name: string; method: string; url: string; params: KVPair[]; headers: KVPair[]; body: ApiRequestBody; auth: ApiRequestAuth; script: string }
 interface ApiFolder { type: 'folder'; id: string; name: string; requests: ApiRequest[] }
 type CollectionItem = ApiFolder | ApiRequest
 interface ApiCollection { id: number; name: string; requests: CollectionItem[] }
@@ -46,6 +46,7 @@ function getRunnerEntries(items: CollectionItem[]): RunnerRequestEntry[] {
 function makeDefaultAuth(): ApiRequestAuth {
   return { type: 'none', bearerToken: '', basicUsername: '', basicPassword: '', apiKeyKey: '', apiKeyValue: '', apiKeyAddTo: 'header' }
 }
+function makeDefaultScript(): string { return '' }
 function normalizeAuth(auth?: Partial<ApiRequestAuth> | null): ApiRequestAuth {
   return {
     ...makeDefaultAuth(),
@@ -55,7 +56,7 @@ function normalizeAuth(auth?: Partial<ApiRequestAuth> | null): ApiRequestAuth {
   }
 }
 function makeNewRequest(): ApiRequest {
-  return { id: crypto.randomUUID(), name: 'Nova Requisição', method: 'GET', url: '', params: [], headers: [], body: { type: 'none', content: '' }, auth: makeDefaultAuth() }
+  return { id: crypto.randomUUID(), name: 'Nova Requisição', method: 'GET', url: '', params: [], headers: [], body: { type: 'none', content: '' }, auth: makeDefaultAuth(), script: makeDefaultScript() }
 }
 function formatSize(b: number): string { return b < 1024 ? `${b} B` : b < 1048576 ? `${(b/1024).toFixed(1)} KB` : `${(b/1048576).toFixed(1)} MB` }
 function formatDuration(ms: number): string { return ms < 1000 ? `${ms} ms` : `${(ms/1000).toFixed(2)} s` }
@@ -566,6 +567,7 @@ function loadRequest(req: ApiRequest, collectionId: number): void {
   populateKvTable(el<HTMLTableSectionElement>('atParamsTbody'), req.params)
   populateKvTable(el<HTMLTableSectionElement>('atHeadersTbody'), req.headers)
   loadAuth(req.auth)
+  el<HTMLTextAreaElement>('atScriptsContent').value = req.script || ''
   const bodyRadio = document.querySelector<HTMLInputElement>(`input[name="atBodyType"][value="${req.body.type}"]`)
   if (bodyRadio) bodyRadio.checked = true
   el<HTMLTextAreaElement>('atBodyContent').value = req.body.content
@@ -577,7 +579,7 @@ function buildCurrentRequest(): ApiRequest {
   const name = el<HTMLInputElement>('atReqName').value.trim() || url || 'Nova Requisição'
   const bodyTypeEl = document.querySelector<HTMLInputElement>('input[name="atBodyType"]:checked')
   const bodyType = (bodyTypeEl?.value ?? 'none') as ApiRequestBody['type']
-  return { ...currentRequest, name, method, url, params: readKvTable(el<HTMLTableSectionElement>('atParamsTbody')), headers: readKvTable(el<HTMLTableSectionElement>('atHeadersTbody')), body: { type: bodyType, content: el<HTMLTextAreaElement>('atBodyContent').value }, auth: readAuthForm() }
+  return { ...currentRequest, name, method, url, params: readKvTable(el<HTMLTableSectionElement>('atParamsTbody')), headers: readKvTable(el<HTMLTableSectionElement>('atHeadersTbody')), body: { type: bodyType, content: el<HTMLTextAreaElement>('atBodyContent').value }, auth: readAuthForm(), script: el<HTMLTextAreaElement>('atScriptsContent').value }
 }
 function updateBodyVisibility(): void {
   const bodyType = document.querySelector<HTMLInputElement>('input[name="atBodyType"]:checked')?.value ?? 'none'
@@ -609,6 +611,44 @@ function readAuthForm(): ApiRequestAuth {
     apiKeyValue: el<HTMLInputElement>('atAuthApiKeyValue').value,
     apiKeyAddTo: el<HTMLSelectElement>('atAuthApiKeyAddTo').value as ApiRequestAuth['apiKeyAddTo'],
   })
+}
+function normalizeScriptValue(value: unknown): string {
+  if (value === null) return 'null'
+  if (value === undefined) return ''
+  if (typeof value === 'string') return value
+  if (typeof value === 'boolean' || typeof value === 'number') return String(value)
+  return JSON.stringify(value)
+}
+function applyRequestScript(req: ApiRequest, vars?: Record<string, string>): Record<string, string> {
+  const baseVars: Record<string, string> = { ...(vars ?? {}) }
+  const script = req.script?.trim()
+  if (!script) return baseVars
+
+  const runtimeVars: Record<string, string> = { ...baseVars }
+  const pm = {
+    iterationData: {
+      keys: (): string[] => Object.keys(baseVars),
+      get: (key: string): string | undefined => baseVars[key],
+    },
+    variables: {
+      set: (key: string, value: unknown): void => { runtimeVars[key] = normalizeScriptValue(value) },
+      get: (key: string): string | undefined => runtimeVars[key],
+    },
+    environment: {
+      set: (key: string, value: unknown): void => { runtimeVars[key] = normalizeScriptValue(value) },
+      get: (key: string): string | undefined => runtimeVars[key],
+    },
+  }
+
+  try {
+    const executor = new Function('pm', script)
+    executor(pm)
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : 'Erro ao executar script'
+    throw new Error(`Script do endpoint falhou: ${msg}`)
+  }
+
+  return runtimeVars
 }
 
 // ---- Proxy request ----
@@ -673,13 +713,14 @@ async function execProxy(req: ApiRequest, vars?: Record<string,string>): Promise
 async function sendRequest(): Promise<void> {
   if (isSending) return
   const req = buildCurrentRequest(); currentRequest = req
-  const url = buildUrlWithParams(req.url, req.params)
+  const runtimeVars = applyRequestScript(req)
+  const url = buildUrlWithParams(req.url, req.params.map(p => ({ ...p, key: subst(p.key, runtimeVars), value: subst(p.value, runtimeVars) })))
   if (!url) { showRespError('Informe a URL antes de enviar.'); return }
   isSending = true
   const sendBtn = el<HTMLButtonElement>('atSendBtn'); sendBtn.disabled = true; sendBtn.textContent = 'Enviando...'
   clearResponse()
   try {
-    const result = await execProxy(req)
+    const result = await execProxy(req, runtimeVars)
     addConsoleEntry({ method: req.method, url, status: result.status, duration: result.duration, responsePreview: summarizeRunnerResponse(result.body) })
     showResponse(result)
   } catch (err: unknown) {
@@ -1010,7 +1051,7 @@ function parseOpenApiCollection(json: unknown, baseUrlOverride?: string): { name
       }
       const m = httpMethod.toUpperCase(); const desc = (op['description'] as string) || (op['summary'] as string) || ''
       const rawName = desc ? `${m} ${path} — ${desc}` : `${m} ${path}`
-      const req: ApiRequest = { id: crypto.randomUUID(), name: rawName.length > 100 ? rawName.slice(0,97)+'…' : rawName, method: m, url: baseUrl + path, params: queryParams, headers: headerParams, body, auth: makeDefaultAuth() }
+      const req: ApiRequest = { id: crypto.randomUUID(), name: rawName.length > 100 ? rawName.slice(0,97)+'…' : rawName, method: m, url: baseUrl + path, params: queryParams, headers: headerParams, body, auth: makeDefaultAuth(), script: makeDefaultScript() }
       const tags = op['tags'] as string[] | undefined; const tag = tags?.[0]
       if (tag) { if (!folderMap.has(tag)) folderMap.set(tag, []); folderMap.get(tag)!.push(req) } else { untagged.push(req) }
     }
@@ -1074,7 +1115,7 @@ function parsePostmanCollection(json: unknown): { name: string; requests: Collec
     let body: ApiRequestBody = { type: 'none', content: '' }
     if (req['body'] && typeof req['body'] === 'object') { const b = req['body'] as Record<string, unknown>; const mode = b['mode'] as string; if (mode === 'raw') { const lang = ((b['options'] as Record<string, unknown> | undefined)?.['raw'] as Record<string, unknown> | undefined)?.['language']; body = { type: lang === 'json' ? 'json' : 'raw', content: String(b['raw'] ?? '') } } else if (mode === 'urlencoded' && Array.isArray(b['urlencoded'])) { body = { type: 'form', content: (b['urlencoded'] as Record<string, unknown>[]).filter(p => p['key']).map(p => `${p['key']}=${p['value'] ?? ''}`).join('&') } } }
     const auth = extractPostmanAuth(req['auth'] ?? col['auth'])
-    return { id: crypto.randomUUID(), name: (item['name'] as string) || url, method, url, params, headers, body, auth }
+    return { id: crypto.randomUUID(), name: (item['name'] as string) || url, method, url, params, headers, body, auth, script: makeDefaultScript() }
   }
   const items: CollectionItem[] = [];
   (col['item'] as unknown[]).forEach(item => { const r = parseItem(item as Record<string, unknown>); if (r) items.push(r) })
@@ -1173,6 +1214,7 @@ export function initPostApisTool(): void {
     el<HTMLInputElement>('atReqName').value = currentRequest.name; el<HTMLSelectElement>('atMethod').value = 'GET'; el<HTMLInputElement>('atUrl').value = ''
     el<HTMLTableSectionElement>('atParamsTbody').innerHTML = ''; el<HTMLTableSectionElement>('atHeadersTbody').innerHTML = ''
     loadAuth(currentRequest.auth)
+    el<HTMLTextAreaElement>('atScriptsContent').value = currentRequest.script
     const none = document.querySelector<HTMLInputElement>('input[name="atBodyType"][value="none"]'); if (none) none.checked = true
     el<HTMLTextAreaElement>('atBodyContent').value = ''; updateBodyVisibility(); clearResponse(); renderCollections()
   })
