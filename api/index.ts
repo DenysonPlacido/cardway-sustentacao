@@ -10,6 +10,7 @@ import logsRouter from './logs-routes'
 import logsWebRouter from './logs-web-routes'
 import { createGeradorDb } from './gerador/db'
 import { createGeradorRouter } from './gerador/routes'
+import { createApiTesterRouter } from './api-tester-routes'
 
 const app = express()
 const PUBLIC_DIR = path.join(__dirname, '..', 'public')
@@ -43,6 +44,7 @@ const dbSetupPromise = setupDb().then(() => true).catch((error: unknown) => {
 
 const geradorDb = createGeradorDb(db)
 const geradorRouter = createGeradorRouter(geradorDb)
+const apiTesterRouter = createApiTesterRouter(db)
 
 app.use(express.json())
 app.use(cookieParser())
@@ -204,6 +206,17 @@ async function setupDb(): Promise<void> {
       gera_recebivel INTEGER,
       envia_fila INTEGER,
       agrupador INTEGER
+    )
+  `)
+
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS api_tester_collections (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER NOT NULL,
+      name TEXT NOT NULL,
+      requests JSONB NOT NULL DEFAULT '[]',
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )
   `)
 
@@ -412,6 +425,7 @@ app.get('/front/document.send.php', (req: Request, res: Response): void => {
 app.use('/api/automacao', authMiddleware, automacaoRouter)
 app.use('/api/logs/web', authMiddleware, logsWebRouter)
 app.use('/api/logs', authMiddleware, logsRouter)
+app.use('/api/api-tester', authMiddleware, apiTesterRouter)
 app.use('/api', authMiddleware, geradorRouter)
 
 const LANCAMENTO_DIR = path.join(PUBLIC_DIR, 'lancamento')

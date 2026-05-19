@@ -79,6 +79,19 @@
           <span>Logs Web SGV</span>
         </a>
 
+        <a class="nav-item" data-section="api-tester" href="#">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+          </svg>
+          <span>Post-APIs</span>
+        </a>
+        <a class="nav-item" data-section="apis-card" href="#">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
+          </svg>
+          <span>APIs Card</span>
+        </a>
+
         <div class="nav-section-label">Automações</div>
         <a class="nav-item" data-section="automacoes" href="#">
           <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -205,6 +218,16 @@
               <div class="tool-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg></div>
               <h3>Atendimento GLPI</h3>
               <p>Visualize chamados, acione a IA e responda direto do portal.</p>
+            </button>
+            <button class="card tool-card" data-section="api-tester" type="button">
+              <div class="tool-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12" /></svg></div>
+              <h3>Post-APIs</h3>
+              <p>Envie requisições HTTP, salve coleções e execute runners automáticos.</p>
+            </button>
+            <button class="card tool-card" data-section="apis-card" type="button">
+              <div class="tool-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></div>
+              <h3>APIs Card</h3>
+              <p>Matriz de ambientes e endpoints das APIs integrati.cloud.</p>
             </button>
             <button class="card tool-card" data-page="/lancamento" type="button">
               <div class="tool-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" /></svg></div>
@@ -530,6 +553,318 @@
             <div class="page-host-frame-wrap">
               <iframe id="contentFrame" class="content-frame" title="Conteudo do portal"></iframe>
             </div>
+          </div>
+        </section>
+
+        <section id="section-api-tester" class="section hidden">
+          <!-- Toast -->
+          <div class="at-toast" id="atToast" hidden>
+            <span id="atToastText"></span>
+            <button id="atToastClose" class="at-toast-close" type="button">×</button>
+          </div>
+
+          <!-- Prompt modal -->
+          <div class="at-dialog-overlay" id="atPromptModal" hidden>
+            <div class="at-dialog">
+              <p class="at-dialog-label" id="atPromptLabel"></p>
+              <input id="atPromptInput" class="at-dialog-input" type="text" />
+              <div class="at-dialog-btns">
+                <button id="atPromptOk" class="btn btn-primary btn-sm" type="button">OK</button>
+                <button id="atPromptCancel" class="btn btn-ghost btn-sm" type="button">Cancelar</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Confirm modal -->
+          <div class="at-dialog-overlay" id="atConfirmModal" hidden>
+            <div class="at-dialog">
+              <p class="at-dialog-label" id="atConfirmLabel"></p>
+              <div class="at-dialog-btns">
+                <button id="atConfirmOk" class="btn btn-danger btn-sm" type="button">Confirmar</button>
+                <button id="atConfirmCancel" class="btn btn-ghost btn-sm" type="button">Cancelar</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Runner overlay -->
+          <div class="at-runner" id="atRunner" hidden>
+            <div class="at-runner-inner">
+              <div class="at-runner-head">
+                <h3 class="at-runner-title">Collection Runner</h3>
+                <button class="at-runner-close" id="atRunnerClose" type="button">×</button>
+              </div>
+              <div class="at-runner-controls">
+                <select id="atRunnerCollSelect" class="at-select">
+                  <option value="">— Selecionar coleção —</option>
+                </select>
+                <button id="atRunnerStart" class="btn btn-primary" type="button">▶ Executar</button>
+                <button id="atRunnerStop" class="btn btn-ghost" type="button" disabled>⏹ Parar</button>
+              </div>
+              <div class="at-runner-data">
+                <div class="at-runner-data-label">Arquivo de dados (opcional)</div>
+                <div class="at-runner-data-row">
+                  <button id="atRunnerFileBtn" class="btn btn-ghost btn-sm" type="button">Selecionar arquivo</button>
+                  <input id="atRunnerFileInput" type="file" accept=".csv,.xls,.xlsx" hidden />
+                  <select id="atRunnerSepSelect" class="at-select-sm">
+                    <option value=",">, (vírgula)</option>
+                    <option value=";">; (ponto e vírgula)</option>
+                  </select>
+                  <span id="atRunnerFileInfo" class="at-runner-data-info">—</span>
+                  <button id="atRunnerFileClear" class="btn btn-ghost btn-sm" type="button">Limpar</button>
+                </div>
+              </div>
+              <div class="at-runner-preview" id="atRunnerPreview" hidden>
+                <div class="at-runner-preview-hdr">
+                  <button class="at-runner-preview-toggle" id="atRunnerPreviewToggle" type="button">
+                    <span id="atRunnerPreviewChevron">▾</span>
+                    Pré-visualização dos dados
+                  </button>
+                  <span id="atRunnerPreviewMeta" class="at-runner-data-info"></span>
+                </div>
+                <div class="at-runner-preview-body" id="atRunnerPreviewBody">
+                  <div id="atRunnerPreviewVars" class="at-runner-preview-vars"></div>
+                  <div class="at-runner-table-wrap at-runner-preview-table-wrap">
+                    <table class="at-runner-table at-runner-preview-table" id="atRunnerPreviewTable"></table>
+                  </div>
+                </div>
+              </div>
+
+              <div class="at-runner-summary" id="atRunnerSummary" hidden>
+                <span id="atRunnerTotal" class="at-runner-sum-item"></span>
+                <span id="atRunnerPassed" class="at-runner-sum-item at-sum-ok"></span>
+                <span id="atRunnerFailed" class="at-runner-sum-item at-sum-err"></span>
+              </div>
+              <div class="at-runner-progress" id="atRunnerProgress" hidden>
+                <div class="at-runner-progress-track">
+                  <div class="at-runner-progress-bar" id="atRunnerProgressBar"></div>
+                </div>
+                <span class="at-runner-data-info" id="atRunnerProgressText"></span>
+              </div>
+              <div class="at-runner-table-wrap">
+                <table class="at-runner-table">
+                  <thead><tr><th>#</th><th>Nome</th><th>Método</th><th>URL</th><th>Status</th><th>Tempo(ms)</th></tr></thead>
+                  <tbody id="atRunnerTbody"></tbody>
+                </table>
+              </div>
+              <div class="at-runner-export" id="atRunnerExport" hidden>
+                <button id="atRunnerExportCsv" class="btn btn-ghost btn-sm" type="button">↓ Exportar CSV</button>
+                <button id="atRunnerExportXls" class="btn btn-ghost btn-sm" type="button">↓ Exportar XLS</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- cURL modal -->
+          <div class="at-save-modal" id="atCurlModal" hidden>
+            <div class="at-save-modal-inner">
+              <div class="at-save-modal-head">
+                <span>cURL</span>
+                <button id="atCurlModalClose" class="at-save-modal-close" type="button">×</button>
+              </div>
+              <pre id="atCurlPre" class="at-curl-pre"></pre>
+              <button id="atCurlCopy" class="btn btn-ghost btn-sm" style="width:100%;margin-top:8px" type="button">Copiar</button>
+            </div>
+          </div>
+
+          <!-- Save modal -->
+          <div class="at-save-modal" id="atSaveModal" hidden>
+            <div class="at-save-modal-inner">
+              <div class="at-save-modal-head">
+                <span>Salvar em coleção</span>
+                <button id="atSaveModalClose" class="at-save-modal-close" type="button">×</button>
+              </div>
+              <div id="atSaveModalList" class="at-save-modal-list"></div>
+              <button id="atSaveNewColl" class="btn btn-ghost btn-sm" type="button" style="width:100%">+ Nova coleção</button>
+            </div>
+          </div>
+
+          <!-- Move modal -->
+          <div class="at-save-modal" id="atMoveModal" hidden>
+            <div class="at-save-modal-inner">
+              <div class="at-save-modal-head">
+                <span>Mover requisição para...</span>
+                <button id="atMoveModalClose" class="at-save-modal-close" type="button">×</button>
+              </div>
+              <div id="atMoveModalList" class="at-save-modal-list"></div>
+            </div>
+          </div>
+
+          <!-- Context menu -->
+          <div class="at-ctx-menu" id="atCtxMenu" hidden>
+            <div id="atCtxMenuList"></div>
+          </div>
+
+          <!-- Main layout -->
+          <div class="at-layout">
+            <!-- Left sidebar -->
+            <aside class="at-sidebar" id="atSidebar">
+              <div class="at-sidebar-head">
+                <span class="at-sidebar-title">Coleções</span>
+                <div class="at-sidebar-btns">
+                  <button id="atRunnerBtn" class="btn btn-ghost btn-xs" type="button">▶ Runner</button>
+                  <button id="atImportBtn" class="btn btn-ghost btn-xs" type="button">↑ JSON</button>
+                  <input id="atImportInput" type="file" accept=".json" hidden />
+                  <button id="atImportUrlBtn" class="btn btn-ghost btn-xs" type="button">↑ URL</button>
+                  <button id="atNewCollectionBtn" class="btn btn-primary btn-xs" type="button">+ Nova</button>
+                </div>
+              </div>
+              <div class="at-import-url-row" id="atImportUrlRow" hidden>
+                <input id="atImportUrlInput" class="at-import-url-input" type="text" placeholder="https://api.exemplo.com/openapi.json" autocomplete="off" />
+                <button id="atImportUrlSubmit" class="btn btn-primary btn-xs" type="button">Importar</button>
+                <button id="atImportUrlCancel" class="btn btn-ghost btn-xs" type="button">×</button>
+              </div>
+              <div id="atCollectionList" class="at-collection-list"></div>
+            </aside>
+
+            <!-- Resize handle -->
+            <div class="at-resize-handle" id="atSidebarHandle"></div>
+
+            <!-- Main area -->
+            <div class="at-main">
+              <!-- Name + controls -->
+              <div class="at-name-bar">
+                <input id="atReqName" class="at-name-input" type="text" placeholder="Nome da requisição..." />
+                <button id="atCurlBtn" class="btn btn-ghost btn-sm" type="button">cURL</button>
+                <button id="atSaveBtn" class="btn btn-ghost btn-sm" type="button">Salvar</button>
+                <button id="atNewReqBtn" class="btn btn-ghost btn-sm" type="button">Nova</button>
+              </div>
+
+              <!-- URL bar -->
+              <div class="at-url-bar">
+                <select id="atMethod" class="at-method-select">
+                  <option>GET</option>
+                  <option>POST</option>
+                  <option>PUT</option>
+                  <option>PATCH</option>
+                  <option>DELETE</option>
+                  <option>HEAD</option>
+                  <option>OPTIONS</option>
+                </select>
+                <input id="atUrl" class="at-url-input" type="text" placeholder="https://api.exemplo.com/recurso" autocomplete="off" />
+                <button id="atSendBtn" class="btn btn-primary" type="button">Enviar</button>
+              </div>
+
+              <!-- Request tabs -->
+              <div class="at-req-tabs">
+                <button class="at-tab active" data-tab="params" type="button">Parâmetros</button>
+                <button class="at-tab" data-tab="headers" type="button">Headers</button>
+                <button class="at-tab" data-tab="body" type="button">Body</button>
+              </div>
+
+              <!-- Tab panels -->
+              <div class="at-tab-panels">
+                <div id="atPaneParams" class="at-tab-panel">
+                  <div class="at-kv-wrap">
+                    <table class="at-kv-table">
+                      <thead><tr><th class="at-kv-check-col"></th><th>Chave</th><th>Valor</th><th></th></tr></thead>
+                      <tbody id="atParamsTbody"></tbody>
+                    </table>
+                  </div>
+                  <button class="at-add-row" id="atAddParam" type="button">+ Adicionar parâmetro</button>
+                </div>
+                <div id="atPaneHeaders" class="at-tab-panel hidden">
+                  <div class="at-kv-wrap">
+                    <table class="at-kv-table">
+                      <thead><tr><th class="at-kv-check-col"></th><th>Chave</th><th>Valor</th><th></th></tr></thead>
+                      <tbody id="atHeadersTbody"></tbody>
+                    </table>
+                  </div>
+                  <button class="at-add-row" id="atAddHeader" type="button">+ Adicionar header</button>
+                </div>
+                <div id="atPaneBody" class="at-tab-panel hidden">
+                  <div class="at-body-types">
+                    <label class="at-radio-label"><input type="radio" name="atBodyType" value="none" checked /> Nenhum</label>
+                    <label class="at-radio-label"><input type="radio" name="atBodyType" value="json" /> JSON</label>
+                    <label class="at-radio-label"><input type="radio" name="atBodyType" value="form" /> Form URL</label>
+                    <label class="at-radio-label"><input type="radio" name="atBodyType" value="raw" /> Texto</label>
+                  </div>
+                  <textarea id="atBodyContent" class="at-body-textarea" rows="6" placeholder="{}"></textarea>
+                </div>
+              </div>
+
+              <!-- Response area -->
+              <div class="at-response">
+                <div class="at-resp-idle-msg" id="atRespIdle">Envie uma requisição para ver a resposta.</div>
+                <div id="atRespBodyWrap" hidden>
+                  <div class="at-resp-meta-bar">
+                    <span id="atRespStatus" class="at-status-badge"></span>
+                    <span id="atRespTime" class="at-resp-meta-item"></span>
+                    <span id="atRespSize" class="at-resp-meta-item"></span>
+                    <div class="at-resp-tab-group">
+                      <button class="at-resp-tab active" data-tab="body" type="button">Body</button>
+                      <button class="at-resp-tab" data-tab="headers" type="button">Headers</button>
+                      <button class="at-resp-tab" id="atRespHtmlTab" data-tab="html" type="button" hidden>HTML</button>
+                    </div>
+                    <button class="btn-copy" id="atRespCopyBtn" type="button">Copiar</button>
+                  </div>
+                  <div id="atRespPaneBody" class="at-resp-pane">
+                    <pre class="at-resp-pre" id="atRespBodyPre"></pre>
+                  </div>
+                  <div id="atRespPaneHeaders" class="at-resp-pane hidden">
+                    <table class="at-kv-table" id="atRespHeadersTable"></table>
+                  </div>
+                  <div id="atRespPaneHtml" class="at-resp-pane at-pane-html hidden">
+                    <iframe id="atRespHtmlFrame" class="at-html-frame" sandbox="allow-same-origin"></iframe>
+                  </div>
+                </div>
+                <div class="at-resp-error" id="atRespError" hidden></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Console panel -->
+          <div class="at-console" id="atConsole">
+            <div class="at-console-bar">
+              <button class="at-console-toggle" id="atConsoleToggle" type="button">
+                <span id="atConsoleChevron">▸</span>
+                Console
+                <span class="at-console-count" id="atConsoleCount">0</span>
+              </button>
+              <button class="btn btn-ghost btn-xs" id="atConsoleExport" type="button">↓ CSV</button>
+              <button class="btn btn-ghost btn-xs" id="atConsoleClear" type="button">Limpar</button>
+            </div>
+            <div class="at-console-body" id="atConsoleBody" hidden>
+              <table class="at-console-table">
+                <thead><tr><th>Hora</th><th>Método</th><th>URL</th><th>Status</th><th>Tempo</th></tr></thead>
+                <tbody id="atConsoleTbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- APIs Card -->
+        <section id="section-apis-card" class="section hidden">
+          <div class="ac-wrap">
+            <div class="ac-auth-banner">
+              <svg class="ac-auth-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/>
+              </svg>
+              <span>Auth:</span>
+              <code class="ac-code">x-api-key</code>
+              <span class="ac-sep">+</span>
+              <code class="ac-code">x-api-username</code>
+              <span class="ac-auth-hint">— inclua nos headers de cada requisição</span>
+              <span class="ac-divider"></span>
+              <span>Swagger:</span>
+              <code class="ac-code">{base_url}/openapi</code>
+            </div>
+
+            <div class="ac-table-wrap">
+              <table class="ac-table">
+                <thead>
+                  <tr>
+                    <th>Serviço</th>
+                    <th><span class="ac-th-badge ac-th-dev">DEV</span></th>
+                    <th><span class="ac-th-badge ac-th-hml">HML</span></th>
+                    <th><span class="ac-th-badge ac-th-prod">PROD</span></th>
+                  </tr>
+                </thead>
+                <tbody id="acTableBody"></tbody>
+              </table>
+            </div>
+
+            <p class="ac-note">
+              Badges com sublinhado pontilhado têm a URL pendente. Edite <code class="ac-code">src/client/home/apis-card.ts</code> para adicionar.
+            </p>
           </div>
         </section>
       </main>

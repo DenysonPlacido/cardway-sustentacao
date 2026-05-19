@@ -98,15 +98,7 @@ export class AiService {
 
   constructor(apiKey: string) {
     this.client = new OpenAI({
-<<<<<<< HEAD
-<<<<<<< HEAD
-      apiKey,
-=======
       apiKey: apiKey || 'no-key',
->>>>>>> dev-denyson
-=======
-      apiKey: apiKey || 'no-key',
->>>>>>> dev-denyson
       baseURL: GEMINI_BASE_URL,
     });
   }
