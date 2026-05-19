@@ -81,7 +81,7 @@ function sanitizeHeaders(raw: unknown): Record<string, string> {
   return result
 }
 
-export function createApiTesterRouter(pool: Pool): Router {
+export function createPostApisRouter(pool: Pool): Router {
   const router = Router()
 
   router.post('/proxy', async (req: Request, res: Response): Promise<void> => {

@@ -10,7 +10,7 @@ import logsRouter from './logs-routes'
 import logsWebRouter from './logs-web-routes'
 import { createGeradorDb } from './gerador/db'
 import { createGeradorRouter } from './gerador/routes'
-import { createApiTesterRouter } from './api-tester-routes'
+import { createPostApisRouter } from './post_apis-routes'
 
 const app = express()
 const PUBLIC_DIR = path.join(__dirname, '..', 'public')
@@ -44,7 +44,7 @@ const dbSetupPromise = setupDb().then(() => true).catch((error: unknown) => {
 
 const geradorDb = createGeradorDb(db)
 const geradorRouter = createGeradorRouter(geradorDb)
-const apiTesterRouter = createApiTesterRouter(db)
+const postApisRouter = createPostApisRouter(db)
 
 app.use(express.json())
 app.use(cookieParser())
@@ -425,7 +425,7 @@ app.get('/front/document.send.php', (req: Request, res: Response): void => {
 app.use('/api/automacao', authMiddleware, automacaoRouter)
 app.use('/api/logs/web', authMiddleware, logsWebRouter)
 app.use('/api/logs', authMiddleware, logsRouter)
-app.use('/api/api-tester', authMiddleware, apiTesterRouter)
+app.use('/api/post_apis', authMiddleware, postApisRouter)
 app.use('/api', authMiddleware, geradorRouter)
 
 const LANCAMENTO_DIR = path.join(PUBLIC_DIR, 'lancamento')

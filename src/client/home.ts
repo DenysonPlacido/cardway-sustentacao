@@ -4,7 +4,7 @@ import { initCteTool } from './home/sql-cte'
 import { ensureGlpiUiStructure, initGlpiTool, fetchGlpiTickets } from './home/glpi'
 import { initLogPedidoTool } from './home/log-pedido'
 import { initLogWebTool } from './home/log-web'
-import { initApiTesterTool } from './home/api-tester'
+import { initPostApisTool } from './home/post_apis'
 import { initApisCardTool } from './home/apis-card'
 
 interface UserInfo { id: number; login: string; name: string; exp?: number }
@@ -17,7 +17,7 @@ const NATIVE_TITLES: Record<string, { title: string; eyebrow: string }> = {
   'log-pedido': { title: 'Logs de Pedido', eyebrow: 'Ferramenta' },
   'log-web': { title: 'Logs Web SGV', eyebrow: 'Ferramenta' },
   automacoes: { title: 'Atendimento GLPI', eyebrow: 'Automacao' },
-  'api-tester': { title: 'Post-APIs', eyebrow: 'Ferramenta' },
+  post_apis: { title: 'Post-APIs', eyebrow: 'Ferramenta' },
   'apis-card': { title: 'APIs Card', eyebrow: 'Referência' },
 }
 
@@ -329,7 +329,7 @@ async function boot(): Promise<void> {
   initLogWebTool()
   ensureGlpiUiStructure()
   initGlpiTool()
-  initApiTesterTool()
+  initPostApisTool()
   initApisCardTool()
 
   applyHashRoute()

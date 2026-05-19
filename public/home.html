@@ -79,7 +79,7 @@
           <span>Logs Web SGV</span>
         </a>
 
-        <a class="nav-item" data-section="api-tester" href="#">
+        <a class="nav-item" data-section="post_apis" href="#">
           <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
           </svg>
@@ -219,7 +219,7 @@
               <h3>Atendimento GLPI</h3>
               <p>Visualize chamados, acione a IA e responda direto do portal.</p>
             </button>
-            <button class="card tool-card" data-section="api-tester" type="button">
+            <button class="card tool-card" data-section="post_apis" type="button">
               <div class="tool-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12" /></svg></div>
               <h3>Post-APIs</h3>
               <p>Envie requisições HTTP, salve coleções e execute runners automáticos.</p>
@@ -556,7 +556,7 @@
           </div>
         </section>
 
-        <section id="section-api-tester" class="section hidden">
+        <section id="section-post_apis" class="section hidden">
           <!-- Toast -->
           <div class="at-toast" id="atToast" hidden>
             <span id="atToastText"></span>
@@ -600,6 +600,19 @@
                 <button id="atRunnerStart" class="btn btn-primary" type="button">▶ Executar</button>
                 <button id="atRunnerStop" class="btn btn-ghost" type="button" disabled>⏹ Parar</button>
               </div>
+              <div class="at-runner-requests" id="atRunnerRequests" hidden>
+                <div class="at-runner-requests-head">
+                  <div>
+                    <div class="at-runner-data-label">Endpoints do runner</div>
+                    <span id="atRunnerSelectionMeta" class="at-runner-data-info"></span>
+                  </div>
+                  <div class="at-runner-requests-actions">
+                    <button id="atRunnerSelectAll" class="btn btn-ghost btn-sm" type="button">Marcar todos</button>
+                    <button id="atRunnerClearAll" class="btn btn-ghost btn-sm" type="button">Limpar</button>
+                  </div>
+                </div>
+                <div id="atRunnerRequestList" class="at-runner-request-list"></div>
+              </div>
               <div class="at-runner-data">
                 <div class="at-runner-data-label">Arquivo de dados (opcional)</div>
                 <div class="at-runner-data-row">
@@ -642,7 +655,7 @@
               </div>
               <div class="at-runner-table-wrap">
                 <table class="at-runner-table">
-                  <thead><tr><th>#</th><th>Nome</th><th>Método</th><th>URL</th><th>Status</th><th>Tempo(ms)</th></tr></thead>
+                  <thead><tr><th>#</th><th>Nome</th><th>Método</th><th>URL</th><th>Status</th><th>Tempo(ms)</th><th>Resposta</th></tr></thead>
                   <tbody id="atRunnerTbody"></tbody>
                 </table>
               </div>
@@ -745,13 +758,23 @@
 
               <!-- Request tabs -->
               <div class="at-req-tabs">
-                <button class="at-tab active" data-tab="params" type="button">Parâmetros</button>
+                <button class="at-tab" data-tab="docs" type="button">Docs</button>
+                <button class="at-tab active" data-tab="params" type="button">Params</button>
+                <button class="at-tab" data-tab="authorization" type="button">Authorization</button>
                 <button class="at-tab" data-tab="headers" type="button">Headers</button>
                 <button class="at-tab" data-tab="body" type="button">Body</button>
+                <button class="at-tab" data-tab="scripts" type="button">Scripts</button>
+                <button class="at-tab" data-tab="settings" type="button">Settings</button>
               </div>
 
               <!-- Tab panels -->
               <div class="at-tab-panels">
+                <div id="atPaneDocs" class="at-tab-panel hidden">
+                  <div class="at-tab-note">
+                    <strong>Docs</strong>
+                    <p>Use esta aba para documentar a requisicao, regras de uso, payloads esperados e exemplos de resposta.</p>
+                  </div>
+                </div>
                 <div id="atPaneParams" class="at-tab-panel">
                   <div class="at-kv-wrap">
                     <table class="at-kv-table">
@@ -760,6 +783,56 @@
                     </table>
                   </div>
                   <button class="at-add-row" id="atAddParam" type="button">+ Adicionar parâmetro</button>
+                </div>
+                <div id="atPaneAuthorization" class="at-tab-panel hidden">
+                  <div class="at-auth-panel">
+                    <div class="at-auth-top">
+                      <label class="at-auth-label" for="atAuthType">Tipo de autenticação</label>
+                      <select id="atAuthType" class="at-select at-auth-select">
+                        <option value="none">Sem auth</option>
+                        <option value="bearer">Bearer Token</option>
+                        <option value="basic">Basic Auth</option>
+                        <option value="api-key">API Key</option>
+                      </select>
+                    </div>
+                    <div class="at-auth-fields hidden" data-auth-type="bearer">
+                      <label class="at-auth-label" for="atAuthBearerToken">Token</label>
+                      <input id="atAuthBearerToken" class="at-auth-input" type="text" placeholder="Cole o token aqui" autocomplete="off" />
+                      <p class="at-auth-help">Envia automaticamente o header <code>Authorization: Bearer ...</code>.</p>
+                    </div>
+                    <div class="at-auth-fields hidden" data-auth-type="basic">
+                      <div class="at-auth-grid">
+                        <div>
+                          <label class="at-auth-label" for="atAuthBasicUser">Usuário</label>
+                          <input id="atAuthBasicUser" class="at-auth-input" type="text" placeholder="Usuário" autocomplete="off" />
+                        </div>
+                        <div>
+                          <label class="at-auth-label" for="atAuthBasicPass">Senha</label>
+                          <input id="atAuthBasicPass" class="at-auth-input" type="password" placeholder="Senha" autocomplete="off" />
+                        </div>
+                      </div>
+                      <p class="at-auth-help">Gera o header <code>Authorization: Basic ...</code> como no Postman.</p>
+                    </div>
+                    <div class="at-auth-fields hidden" data-auth-type="api-key">
+                      <div class="at-auth-grid">
+                        <div>
+                          <label class="at-auth-label" for="atAuthApiKeyKey">Chave</label>
+                          <input id="atAuthApiKeyKey" class="at-auth-input" type="text" placeholder="Authorization, x-api-key..." autocomplete="off" />
+                        </div>
+                        <div>
+                          <label class="at-auth-label" for="atAuthApiKeyValue">Valor</label>
+                          <input id="atAuthApiKeyValue" class="at-auth-input" type="text" placeholder="Valor da chave" autocomplete="off" />
+                        </div>
+                      </div>
+                      <div class="at-auth-top">
+                        <label class="at-auth-label" for="atAuthApiKeyAddTo">Adicionar em</label>
+                        <select id="atAuthApiKeyAddTo" class="at-select at-auth-select">
+                          <option value="header">Header</option>
+                          <option value="query">Query Params</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
                 </div>
                 <div id="atPaneHeaders" class="at-tab-panel hidden">
                   <div class="at-kv-wrap">
@@ -778,6 +851,18 @@
                     <label class="at-radio-label"><input type="radio" name="atBodyType" value="raw" /> Texto</label>
                   </div>
                   <textarea id="atBodyContent" class="at-body-textarea" rows="6" placeholder="{}"></textarea>
+                </div>
+                <div id="atPaneScripts" class="at-tab-panel hidden">
+                  <div class="at-tab-note">
+                    <strong>Scripts</strong>
+                    <p>Espaco reservado para scripts antes/depois da execucao, como no Postman. Posso implementar os hooks na proxima etapa.</p>
+                  </div>
+                </div>
+                <div id="atPaneSettings" class="at-tab-panel hidden">
+                  <div class="at-tab-note">
+                    <strong>Settings</strong>
+                    <p>Espaco reservado para configuracoes da requisicao, como timeout, redirects e comportamento de SSL.</p>
+                  </div>
                 </div>
               </div>
 
@@ -824,7 +909,7 @@
             </div>
             <div class="at-console-body" id="atConsoleBody" hidden>
               <table class="at-console-table">
-                <thead><tr><th>Hora</th><th>Método</th><th>URL</th><th>Status</th><th>Tempo</th></tr></thead>
+                <thead><tr><th>Hora</th><th>Método</th><th>URL</th><th>Status</th><th>Tempo</th><th>Resposta</th></tr></thead>
                 <tbody id="atConsoleTbody"></tbody>
               </table>
             </div>

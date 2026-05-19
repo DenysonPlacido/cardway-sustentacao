@@ -2,13 +2,23 @@ import * as XLSX from 'xlsx'
 
 interface KVPair { key: string; value: string; enabled: boolean }
 interface ApiRequestBody { type: 'none' | 'json' | 'form' | 'raw'; content: string }
-interface ApiRequest { id: string; name: string; method: string; url: string; params: KVPair[]; headers: KVPair[]; body: ApiRequestBody }
+interface ApiRequestAuth {
+  type: 'none' | 'bearer' | 'basic' | 'api-key'
+  bearerToken: string
+  basicUsername: string
+  basicPassword: string
+  apiKeyKey: string
+  apiKeyValue: string
+  apiKeyAddTo: 'header' | 'query'
+}
+interface ApiRequest { id: string; name: string; method: string; url: string; params: KVPair[]; headers: KVPair[]; body: ApiRequestBody; auth: ApiRequestAuth }
 interface ApiFolder { type: 'folder'; id: string; name: string; requests: ApiRequest[] }
 type CollectionItem = ApiFolder | ApiRequest
 interface ApiCollection { id: number; name: string; requests: CollectionItem[] }
+interface RunnerRequestEntry { request: ApiRequest; pathLabel: string }
 interface ProxyResult { status: number; statusText: string; headers: Record<string, string>; body: string; duration: number; size: number }
-interface ConsoleEntry { id: string; ts: number; method: string; url: string; status: number | null; duration: number | null; error?: string }
-type ActiveTab = 'params' | 'headers' | 'body'
+interface ConsoleEntry { id: string; ts: number; method: string; url: string; status: number | null; duration: number | null; responsePreview?: string; error?: string }
+type ActiveTab = 'docs' | 'params' | 'authorization' | 'headers' | 'body' | 'scripts' | 'settings'
 type RespTab = 'body' | 'headers' | 'html'
 
 // ---- State ----
@@ -20,13 +30,33 @@ let runnerStop = false
 const openFolders = new Set<string>()
 const openCollections = new Set<number>()
 const consoleEntries: ConsoleEntry[] = []
+const runnerSelectedRequests = new Map<number, Set<string>>()
 let runnerData: Record<string, string>[] = []
 let _ctxCleanup: (() => void) | null = null
 
 // ---- Utilities ----
 function isFolder(item: CollectionItem): item is ApiFolder { return (item as ApiFolder).type === 'folder' }
 function getAllRequests(items: CollectionItem[]): ApiRequest[] { return items.flatMap(item => isFolder(item) ? item.requests : [item]) }
-function makeNewRequest(): ApiRequest { return { id: crypto.randomUUID(), name: 'Nova Requisição', method: 'GET', url: '', params: [], headers: [], body: { type: 'none', content: '' } } }
+function getRunnerEntries(items: CollectionItem[]): RunnerRequestEntry[] {
+  return items.flatMap(item => isFolder(item)
+    ? item.requests.map(request => ({ request, pathLabel: item.name }))
+    : [{ request: item, pathLabel: 'Raiz' }]
+  )
+}
+function makeDefaultAuth(): ApiRequestAuth {
+  return { type: 'none', bearerToken: '', basicUsername: '', basicPassword: '', apiKeyKey: '', apiKeyValue: '', apiKeyAddTo: 'header' }
+}
+function normalizeAuth(auth?: Partial<ApiRequestAuth> | null): ApiRequestAuth {
+  return {
+    ...makeDefaultAuth(),
+    ...(auth ?? {}),
+    type: auth?.type === 'bearer' || auth?.type === 'basic' || auth?.type === 'api-key' ? auth.type : 'none',
+    apiKeyAddTo: auth?.apiKeyAddTo === 'query' ? 'query' : 'header',
+  }
+}
+function makeNewRequest(): ApiRequest {
+  return { id: crypto.randomUUID(), name: 'Nova Requisição', method: 'GET', url: '', params: [], headers: [], body: { type: 'none', content: '' }, auth: makeDefaultAuth() }
+}
 function formatSize(b: number): string { return b < 1024 ? `${b} B` : b < 1048576 ? `${(b/1024).toFixed(1)} KB` : `${(b/1048576).toFixed(1)} MB` }
 function formatDuration(ms: number): string { return ms < 1000 ? `${ms} ms` : `${(ms/1000).toFixed(2)} s` }
 function formatTime(ts: number): string { return new Date(ts).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) }
@@ -163,8 +193,124 @@ function populateKvTable(tbody: HTMLTableSectionElement, pairs: KVPair[]): void 
 }
 
 // ---- Runner preview & results ----
-interface RunnerResult { iter: number; name: string; method: string; url: string; status: number | null; duration: number | null; error: string }
+interface RunnerResult { iter: number; name: string; method: string; url: string; status: number | null; duration: number | null; error: string; response: string; responsePreview: string }
 let runnerResults: RunnerResult[] = []
+
+function summarizeRunnerResponse(body: string): string {
+  const normalized = tryJson(body).replace(/\s+/g, ' ').trim()
+  if (!normalized) return 'Sem resposta'
+  return normalized.length > 180 ? `${normalized.slice(0, 177)}...` : normalized
+}
+
+function normalizeRunnerResponse(body: string): string {
+  const normalized = tryJson(body).trim()
+  return normalized || 'Sem resposta'
+}
+
+function getSelectedRunnerRequestIds(collectionId: number, allEntries: RunnerRequestEntry[]): Set<string> {
+  const availableIds = new Set(allEntries.map(entry => entry.request.id))
+  const saved = runnerSelectedRequests.get(collectionId)
+
+  if (!saved) {
+    const next = new Set(availableIds)
+    runnerSelectedRequests.set(collectionId, next)
+    return next
+  }
+
+  const next = new Set([...saved].filter(id => availableIds.has(id)))
+  if (saved.size > 0 && next.size === 0) {
+    availableIds.forEach(id => next.add(id))
+  }
+  runnerSelectedRequests.set(collectionId, next)
+  return next
+}
+
+function renderRunnerRequestPicker(): void {
+  const wrap = el<HTMLDivElement>('atRunnerRequests')
+  const list = el<HTMLDivElement>('atRunnerRequestList')
+  const meta = el<HTMLSpanElement>('atRunnerSelectionMeta')
+  const colId = Number(el<HTMLSelectElement>('atRunnerCollSelect').value)
+  const col = collections.find(c => c.id === colId)
+
+  if (!col) {
+    wrap.hidden = true
+    list.innerHTML = ''
+    meta.textContent = ''
+    return
+  }
+
+  const entries = getRunnerEntries(col.requests)
+  if (entries.length === 0) {
+    wrap.hidden = true
+    list.innerHTML = ''
+    meta.textContent = ''
+    return
+  }
+
+  const selected = getSelectedRunnerRequestIds(colId, entries)
+  list.innerHTML = ''
+
+  entries.forEach(entry => {
+    const item = document.createElement('label')
+    item.className = 'at-runner-request-item'
+
+    const checkbox = document.createElement('input')
+    checkbox.type = 'checkbox'
+    checkbox.checked = selected.has(entry.request.id)
+    checkbox.addEventListener('change', () => {
+      const current = getSelectedRunnerRequestIds(colId, entries)
+      if (checkbox.checked) current.add(entry.request.id)
+      else current.delete(entry.request.id)
+      renderRunnerRequestPicker()
+      renderRunnerPreview()
+    })
+
+    const copy = document.createElement('div')
+    copy.className = 'at-runner-request-copy'
+
+    const name = document.createElement('div')
+    name.className = 'at-runner-request-name'
+    name.textContent = entry.request.name || entry.request.url || 'Sem nome'
+
+    const metaLine = document.createElement('div')
+    metaLine.className = 'at-runner-request-meta'
+    metaLine.textContent = `${entry.pathLabel} | ${entry.request.method} | ${entry.request.url || 'Sem URL'}`
+
+    copy.appendChild(name)
+    copy.appendChild(metaLine)
+    item.appendChild(checkbox)
+    item.appendChild(copy)
+    list.appendChild(item)
+  })
+
+  meta.textContent = `${selected.size} de ${entries.length} endpoint${entries.length !== 1 ? 's' : ''} selecionado${selected.size !== 1 ? 's' : ''}`
+  wrap.hidden = false
+}
+
+function openRunnerForRequest(collectionId: number, requestId: string): void {
+  const col = collections.find(item => item.id === collectionId)
+  if (!col) {
+    showToast('Coleção não encontrada para o runner.', 'error')
+    return
+  }
+
+  const entries = getRunnerEntries(col.requests)
+  const target = entries.find(entry => entry.request.id === requestId)
+  if (!target) {
+    showToast('Endpoint não encontrado para o runner.', 'error')
+    return
+  }
+
+  runnerSelectedRequests.set(collectionId, new Set([requestId]))
+  el<HTMLSelectElement>('atRunnerCollSelect').value = String(collectionId)
+  renderRunnerRequestPicker()
+  renderRunnerPreview()
+  el<HTMLTableSectionElement>('atRunnerTbody').innerHTML = ''
+  el('atRunnerSummary').hidden = true
+  el('atRunnerProgress').hidden = true
+  el('atRunnerExport').hidden = true
+  el('atRunner').hidden = false
+}
 
 function renderRunnerPreview(): void {
   const panel = el<HTMLDivElement>('atRunnerPreview')
@@ -178,7 +324,10 @@ function renderRunnerPreview(): void {
   const varsDiv = el<HTMLDivElement>('atRunnerPreviewVars')
   varsDiv.innerHTML = ''
   if (col) {
-    const allText = getAllRequests(col.requests).flatMap(r => [r.url, r.body.content, ...r.headers.map(h => h.value), ...r.params.map(p => p.value)]).join(' ')
+    const entries = getRunnerEntries(col.requests)
+    const selected = getSelectedRunnerRequestIds(col.id, entries)
+    const selectedRequests = entries.filter(entry => selected.has(entry.request.id)).map(entry => entry.request)
+    const allText = selectedRequests.flatMap(r => [r.url, r.body.content, ...r.headers.map(h => h.value), ...r.params.map(p => p.value)]).join(' ')
     const usedVars = [...new Set([...allText.matchAll(/\{\{(\w+)\}\}/g)].map(m => m[1]!))]
     if (usedVars.length > 0) {
       const wrap = document.createElement('div'); wrap.className = 'at-preview-vars-wrap'
@@ -219,14 +368,14 @@ function renderRunnerPreview(): void {
 
 function exportRunnerResults(format: 'csv' | 'xlsx'): void {
   if (runnerResults.length === 0) { showToast('Nenhum resultado para exportar.', 'error'); return }
-  const headers = ['#', 'Nome', 'Método', 'URL', 'Status', 'Tempo(ms)', 'Erro']
+  const headers = ['#', 'Nome', 'Método', 'URL', 'Status', 'Tempo(ms)', 'Erro', 'Resposta']
   if (format === 'csv') {
-    const rows = runnerResults.map(r => [r.iter, `"${r.name.replace(/"/g,'""')}"`, r.method, `"${r.url.replace(/"/g,'""')}"`, r.status ?? '', r.duration ?? '', `"${r.error.replace(/"/g,'""')}"`].join(','))
+    const rows = runnerResults.map(r => [r.iter, `"${r.name.replace(/"/g,'""')}"`, r.method, `"${r.url.replace(/"/g,'""')}"`, r.status ?? '', r.duration ?? '', `"${r.error.replace(/"/g,'""')}"`, `"${r.response.replace(/"/g,'""')}"`].join(','))
     const csv = [headers.join(','), ...rows].join('\r\n')
     const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' })); a.download = `runner_${Date.now()}.csv`; a.click(); URL.revokeObjectURL(a.href)
   } else {
     const wb = XLSX.utils.book_new()
-    const ws = XLSX.utils.aoa_to_sheet([headers, ...runnerResults.map(r => [r.iter, r.name, r.method, r.url, r.status ?? '', r.duration ?? '', r.error])])
+    const ws = XLSX.utils.aoa_to_sheet([headers, ...runnerResults.map(r => [r.iter, r.name, r.method, r.url, r.status ?? '', r.duration ?? '', r.error, r.response])])
     XLSX.utils.book_append_sheet(wb, ws, 'Resultados')
     XLSX.writeFile(wb, `runner_${Date.now()}.xlsx`)
   }
@@ -240,9 +389,9 @@ function addConsoleEntry(e: Omit<ConsoleEntry, 'id' | 'ts'>): void {
 }
 function exportConsoleCsv(): void {
   if (consoleEntries.length === 0) { showToast('Console vazio.', 'error'); return }
-  const header = 'Hora,Método,URL,Status,Tempo(ms),Erro'
+  const header = 'Hora,Método,URL,Status,Tempo(ms),Resposta,Erro'
   const rows = consoleEntries.map(e =>
-    [formatTime(e.ts), e.method, `"${e.url.replace(/"/g, '""')}"`, e.status ?? '', e.duration ?? '', e.error ? `"${e.error.replace(/"/g, '""')}"` : ''].join(',')
+    [formatTime(e.ts), e.method, `"${e.url.replace(/"/g, '""')}"`, e.status ?? '', e.duration ?? '', `"${(e.responsePreview ?? '').replace(/"/g, '""')}"`, e.error ? `"${e.error.replace(/"/g, '""')}"` : ''].join(',')
   )
   const csv = [header, ...rows].join('\r\n')
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
@@ -260,7 +409,7 @@ function renderConsole(): void {
     const statusHtml = entry.status != null
       ? `<span class="at-status-badge ${statusClass(entry.status)}">${entry.status}</span>`
       : entry.error ? `<span class="at-status-badge at-status-5xx">${esc(entry.error.slice(0,40))}</span>` : '—'
-    tr.innerHTML = `<td class="at-con-time">${esc(formatTime(entry.ts))}</td><td><span class="at-method-badge at-method-${entry.method.toLowerCase()}">${esc(entry.method)}</span></td><td class="at-con-url" title="${esc(entry.url)}">${esc(entry.url)}</td><td>${statusHtml}</td><td>${entry.duration != null ? formatDuration(entry.duration) : '—'}</td>`
+    tr.innerHTML = `<td class="at-con-time">${esc(formatTime(entry.ts))}</td><td><span class="at-method-badge at-method-${entry.method.toLowerCase()}">${esc(entry.method)}</span></td><td class="at-con-url" title="${esc(entry.url)}">${esc(entry.url)}</td><td>${statusHtml}</td><td>${entry.duration != null ? formatDuration(entry.duration) : '—'}</td><td class="at-con-response" title="${esc(entry.responsePreview ?? '')}">${esc(entry.responsePreview ?? '—')}</td>`
     tbody.appendChild(tr)
   })
 }
@@ -297,7 +446,9 @@ function renderCollections(): void {
 
   if (collections.length === 0) {
     const msg = document.createElement('p'); msg.className = 'at-empty'
-    msg.textContent = 'Nenhuma coleção. Clique em "+ Nova" para criar.'; list.appendChild(msg); return
+    msg.textContent = 'Nenhuma coleção. Clique em "+ Nova" para criar.'; list.appendChild(msg)
+    renderRunnerRequestPicker()
+    return
   }
 
   collections.forEach(col => {
@@ -340,6 +491,8 @@ function renderCollections(): void {
     list.appendChild(colEl)
   })
   if (savedVal) runnerSel.value = savedVal
+  renderRunnerRequestPicker()
+  renderRunnerPreview()
 }
 
 function buildFolderEl(col: ApiCollection, folder: ApiFolder): HTMLElement {
@@ -386,11 +539,18 @@ function buildRequestEl(collectionId: number, folderId: string | null, req: ApiR
   const nameEl = document.createElement('span'); nameEl.className = 'at-req-item-name'; nameEl.textContent = req.name || req.url || 'Sem nome'; nameEl.title = req.url
 
   const btns = document.createElement('span'); btns.className = 'at-req-btns'
-  const moveBtn = document.createElement('button'); moveBtn.type = 'button'; moveBtn.className = 'at-req-del'; moveBtn.title = 'Mover'; moveBtn.textContent = '↕'
-  moveBtn.addEventListener('click', e => { e.stopPropagation(); showMoveModal(collectionId, folderId, req) })
-  const delBtn = document.createElement('button'); delBtn.type = 'button'; delBtn.className = 'at-req-del'; delBtn.title = 'Remover'; delBtn.textContent = '×'
-  delBtn.addEventListener('click', e => { e.stopPropagation(); void removeFromCollection(collectionId, folderId, req.id) })
-  btns.appendChild(moveBtn); btns.appendChild(delBtn)
+  const menuBtn = document.createElement('button'); menuBtn.type = 'button'; menuBtn.className = 'at-req-del'; menuBtn.title = 'Opcoes'; menuBtn.textContent = '...'
+  menuBtn.addEventListener('click', e => {
+    e.stopPropagation()
+    showCtxMenu(menuBtn, [
+      { icon: '>', label: 'Abrir no Runner', action: () => openRunnerForRequest(collectionId, req.id) },
+      { icon: 'E', label: 'Editar requisicao', action: () => loadRequest(req, collectionId) },
+      { icon: 'M', label: 'Mover', action: () => showMoveModal(collectionId, folderId, req) },
+      'sep',
+      { icon: 'X', label: 'Remover', danger: true, action: () => void removeFromCollection(collectionId, folderId, req.id) },
+    ])
+  })
+  btns.appendChild(menuBtn)
 
   reqEl.appendChild(badge); reqEl.appendChild(nameEl); reqEl.appendChild(btns)
   reqEl.addEventListener('click', () => loadRequest(req, collectionId))
@@ -399,12 +559,13 @@ function buildRequestEl(collectionId: number, folderId: string | null, req: ApiR
 
 // ---- Request form ----
 function loadRequest(req: ApiRequest, collectionId: number): void {
-  currentRequest = { ...req }; currentCollectionId = collectionId
+  currentRequest = { ...req, auth: normalizeAuth(req.auth) }; currentCollectionId = collectionId
   el<HTMLInputElement>('atReqName').value = req.name
   el<HTMLSelectElement>('atMethod').value = req.method
   el<HTMLInputElement>('atUrl').value = req.url
   populateKvTable(el<HTMLTableSectionElement>('atParamsTbody'), req.params)
   populateKvTable(el<HTMLTableSectionElement>('atHeadersTbody'), req.headers)
+  loadAuth(req.auth)
   const bodyRadio = document.querySelector<HTMLInputElement>(`input[name="atBodyType"][value="${req.body.type}"]`)
   if (bodyRadio) bodyRadio.checked = true
   el<HTMLTextAreaElement>('atBodyContent').value = req.body.content
@@ -416,12 +577,38 @@ function buildCurrentRequest(): ApiRequest {
   const name = el<HTMLInputElement>('atReqName').value.trim() || url || 'Nova Requisição'
   const bodyTypeEl = document.querySelector<HTMLInputElement>('input[name="atBodyType"]:checked')
   const bodyType = (bodyTypeEl?.value ?? 'none') as ApiRequestBody['type']
-  return { ...currentRequest, name, method, url, params: readKvTable(el<HTMLTableSectionElement>('atParamsTbody')), headers: readKvTable(el<HTMLTableSectionElement>('atHeadersTbody')), body: { type: bodyType, content: el<HTMLTextAreaElement>('atBodyContent').value } }
+  return { ...currentRequest, name, method, url, params: readKvTable(el<HTMLTableSectionElement>('atParamsTbody')), headers: readKvTable(el<HTMLTableSectionElement>('atHeadersTbody')), body: { type: bodyType, content: el<HTMLTextAreaElement>('atBodyContent').value }, auth: readAuthForm() }
 }
 function updateBodyVisibility(): void {
   const bodyType = document.querySelector<HTMLInputElement>('input[name="atBodyType"]:checked')?.value ?? 'none'
   const ta = el<HTMLTextAreaElement>('atBodyContent'); ta.hidden = bodyType === 'none'
   ta.placeholder = bodyType === 'json' ? '{\n  "chave": "valor"\n}' : bodyType === 'form' ? 'chave=valor&outro=xxx' : ''
+}
+function updateAuthVisibility(): void {
+  const authType = el<HTMLSelectElement>('atAuthType').value as ApiRequestAuth['type']
+  document.querySelectorAll<HTMLElement>('.at-auth-fields').forEach(block => block.classList.toggle('hidden', block.dataset['authType'] !== authType))
+}
+function loadAuth(auth?: Partial<ApiRequestAuth>): void {
+  const normalized = normalizeAuth(auth)
+  el<HTMLSelectElement>('atAuthType').value = normalized.type
+  el<HTMLInputElement>('atAuthBearerToken').value = normalized.bearerToken
+  el<HTMLInputElement>('atAuthBasicUser').value = normalized.basicUsername
+  el<HTMLInputElement>('atAuthBasicPass').value = normalized.basicPassword
+  el<HTMLInputElement>('atAuthApiKeyKey').value = normalized.apiKeyKey
+  el<HTMLInputElement>('atAuthApiKeyValue').value = normalized.apiKeyValue
+  el<HTMLSelectElement>('atAuthApiKeyAddTo').value = normalized.apiKeyAddTo
+  updateAuthVisibility()
+}
+function readAuthForm(): ApiRequestAuth {
+  return normalizeAuth({
+    type: el<HTMLSelectElement>('atAuthType').value as ApiRequestAuth['type'],
+    bearerToken: el<HTMLInputElement>('atAuthBearerToken').value,
+    basicUsername: el<HTMLInputElement>('atAuthBasicUser').value,
+    basicPassword: el<HTMLInputElement>('atAuthBasicPass').value,
+    apiKeyKey: el<HTMLInputElement>('atAuthApiKeyKey').value,
+    apiKeyValue: el<HTMLInputElement>('atAuthApiKeyValue').value,
+    apiKeyAddTo: el<HTMLSelectElement>('atAuthApiKeyAddTo').value as ApiRequestAuth['apiKeyAddTo'],
+  })
 }
 
 // ---- Proxy request ----
@@ -436,14 +623,49 @@ function buildHeaders(pairs: KVPair[]): Record<string, string> {
   pairs.filter(p => p.enabled && p.key).forEach(p => { h[p.key] = p.value })
   return h
 }
+function headerKeyExists(headers: Record<string, string>, key: string): boolean {
+  return Object.keys(headers).some(name => name.toLowerCase() === key.toLowerCase())
+}
+function setHeader(headers: Record<string, string>, key: string, value: string): void {
+  const existing = Object.keys(headers).find(name => name.toLowerCase() === key.toLowerCase())
+  if (existing) delete headers[existing]
+  headers[key] = value
+}
+function encodeBasicAuth(username: string, password: string): string {
+  return btoa(unescape(encodeURIComponent(`${username}:${password}`)))
+}
+function applyAuthToRequest(url: string, headers: Record<string, string>, auth: ApiRequestAuth, applyVars: (s: string) => string): { url: string; headers: Record<string, string> } {
+  if (auth.type === 'bearer') {
+    const token = applyVars(auth.bearerToken).trim()
+    if (token) setHeader(headers, 'Authorization', `Bearer ${token}`)
+  } else if (auth.type === 'basic') {
+    const username = applyVars(auth.basicUsername)
+    const password = applyVars(auth.basicPassword)
+    if (username || password) setHeader(headers, 'Authorization', `Basic ${encodeBasicAuth(username, password)}`)
+  } else if (auth.type === 'api-key') {
+    const key = applyVars(auth.apiKeyKey).trim()
+    const value = applyVars(auth.apiKeyValue)
+    if (key) {
+      if (auth.apiKeyAddTo === 'query') {
+        const sep = url.includes('?') ? '&' : '?'
+        url = `${url}${sep}${encodeURIComponent(key)}=${encodeURIComponent(value)}`
+      } else {
+        setHeader(headers, key, value)
+      }
+    }
+  }
+  return { url, headers }
+}
 async function execProxy(req: ApiRequest, vars?: Record<string,string>): Promise<ProxyResult> {
   const applyVars = (s: string) => vars ? subst(s, vars) : s
-  const url = buildUrlWithParams(applyVars(req.url), req.params.map(p => vars ? { ...p, key: applyVars(p.key), value: applyVars(p.value) } : p))
+  let url = buildUrlWithParams(applyVars(req.url), req.params.map(p => vars ? { ...p, key: applyVars(p.key), value: applyVars(p.value) } : p))
   const headers = buildHeaders(req.headers.map(h => vars ? { ...h, key: applyVars(h.key), value: applyVars(h.value) } : h))
-  if (req.body.type === 'json' && !headers['Content-Type']) headers['Content-Type'] = 'application/json'
-  if (req.body.type === 'form' && !headers['Content-Type']) headers['Content-Type'] = 'application/x-www-form-urlencoded'
+  const withAuth = applyAuthToRequest(url, headers, normalizeAuth(req.auth), applyVars)
+  url = withAuth.url
+  if (req.body.type === 'json' && !headerKeyExists(headers, 'Content-Type')) headers['Content-Type'] = 'application/json'
+  if (req.body.type === 'form' && !headerKeyExists(headers, 'Content-Type')) headers['Content-Type'] = 'application/x-www-form-urlencoded'
   const body = req.body.type !== 'none' ? applyVars(req.body.content) : undefined
-  const res = await fetch('/api/api-tester/proxy', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ method: req.method, url, headers, body }) })
+  const res = await fetch('/api/post_apis/proxy', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ method: req.method, url, headers, body }) })
   const json = (await res.json()) as { success: boolean; data?: ProxyResult; error?: string }
   if (!json.success || !json.data) throw new Error(json.error ?? 'Erro ao executar requisição')
   return json.data
@@ -458,11 +680,11 @@ async function sendRequest(): Promise<void> {
   clearResponse()
   try {
     const result = await execProxy(req)
-    addConsoleEntry({ method: req.method, url, status: result.status, duration: result.duration })
+    addConsoleEntry({ method: req.method, url, status: result.status, duration: result.duration, responsePreview: summarizeRunnerResponse(result.body) })
     showResponse(result)
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Erro de rede'
-    addConsoleEntry({ method: req.method, url, status: null, duration: null, error: msg }); showRespError(msg)
+    addConsoleEntry({ method: req.method, url, status: null, duration: null, responsePreview: msg, error: msg }); showRespError(msg)
   } finally { isSending = false; sendBtn.disabled = false; sendBtn.textContent = 'Enviar' }
 }
 
@@ -503,14 +725,14 @@ function setRespTab(tab: RespTab): void {
 
 // ---- Collections API ----
 async function loadCollections(): Promise<void> {
-  try { const res = await fetch('/api/api-tester/collections', { credentials: 'include' }); const json = (await res.json()) as { success: boolean; data?: ApiCollection[] }; if (json.success && json.data) { collections = json.data; renderCollections() } } catch { /* no collections */ }
+  try { const res = await fetch('/api/post_apis/collections', { credentials: 'include' }); const json = (await res.json()) as { success: boolean; data?: ApiCollection[] }; if (json.success && json.data) { collections = json.data; renderCollections() } } catch { /* no collections */ }
 }
 async function updateItems(collectionId: number, items: CollectionItem[]): Promise<void> {
-  await fetch(`/api/api-tester/collections/${collectionId}`, { method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ requests: items }) })
+  await fetch(`/api/post_apis/collections/${collectionId}`, { method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ requests: items }) })
 }
 async function createCollection(name: string): Promise<ApiCollection | null> {
   try {
-    const res = await fetch('/api/api-tester/collections', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, requests: [] }) })
+    const res = await fetch('/api/post_apis/collections', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, requests: [] }) })
     const json = (await res.json()) as { success: boolean; data?: ApiCollection }
     if (json.success && json.data) { openCollections.add(json.data.id); collections = [json.data, ...collections]; renderCollections(); return json.data }
   } catch (err: unknown) { showToast(err instanceof Error ? err.message : 'Erro ao criar coleção', 'error') }
@@ -518,7 +740,7 @@ async function createCollection(name: string): Promise<ApiCollection | null> {
 }
 async function deleteCollection(id: number): Promise<void> {
   if (!await showConfirm('Excluir esta coleção?')) return
-  await fetch(`/api/api-tester/collections/${id}`, { method: 'DELETE', credentials: 'include' })
+  await fetch(`/api/post_apis/collections/${id}`, { method: 'DELETE', credentials: 'include' })
   collections = collections.filter(c => c.id !== id); openCollections.delete(id); if (currentCollectionId === id) currentCollectionId = null; renderCollections()
 }
 function exportCollection(col: ApiCollection): void {
@@ -532,7 +754,7 @@ function exportCollection(col: ApiCollection): void {
 async function renameCollection(id: number, currentName: string): Promise<void> {
   const name = await showPrompt('Renomear coleção:', currentName)
   if (!name || name === currentName) return
-  await fetch(`/api/api-tester/collections/${id}`, { method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name }) })
+  await fetch(`/api/post_apis/collections/${id}`, { method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name }) })
   collections = collections.map(c => c.id === id ? { ...c, name } : c); renderCollections()
 }
 async function createFolderInCollection(collectionId: number, folderName: string): Promise<void> {
@@ -584,18 +806,21 @@ async function removeFromCollection(collectionId: number, folderId: string | nul
 
 // ---- cURL ----
 function buildCurl(req: ApiRequest): string {
-  const url = buildUrlWithParams(req.url, req.params)
+  let url = buildUrlWithParams(req.url, req.params)
   const sq = (s: string): string => `'${s.replace(/'/g, "'\\''")}'`
   const parts: string[] = [`curl -X ${req.method}`]
-  req.headers.filter(h => h.enabled && h.key).forEach(h => {
-    parts.push(`  -H ${sq(`${h.key}: ${h.value}`)}`)
+  const headers = buildHeaders(req.headers)
+  const withAuth = applyAuthToRequest(url, headers, normalizeAuth(req.auth), value => value)
+  url = withAuth.url
+  Object.entries(headers).forEach(([key, value]) => {
+    parts.push(`  -H ${sq(`${key}: ${value}`)}`)
   })
   if (req.body.type === 'json') {
-    if (!req.headers.some(h => h.enabled && h.key.toLowerCase() === 'content-type'))
+    if (!headerKeyExists(headers, 'Content-Type'))
       parts.push(`  -H 'Content-Type: application/json'`)
     parts.push(`  -d ${sq(req.body.content)}`)
   } else if (req.body.type === 'form') {
-    if (!req.headers.some(h => h.enabled && h.key.toLowerCase() === 'content-type'))
+    if (!headerKeyExists(headers, 'Content-Type'))
       parts.push(`  -H 'Content-Type: application/x-www-form-urlencoded'`)
     parts.push(`  -d ${sq(req.body.content)}`)
   } else if (req.body.type === 'raw' && req.body.content) {
@@ -655,7 +880,11 @@ function showMoveModal(fromColId: number, fromFolderId: string | null, req: ApiR
 // ---- Runner ----
 async function runCollection(collectionId: number): Promise<void> {
   const col = collections.find(c => c.id === collectionId); if (!col) { showToast('Coleção não encontrada.', 'error'); return }
-  const allReqs = getAllRequests(col.requests); if (allReqs.length === 0) { showToast('Coleção vazia.', 'error'); return }
+  const allEntries = getRunnerEntries(col.requests)
+  if (allEntries.length === 0) { showToast('Coleção vazia.', 'error'); return }
+  const selectedIds = getSelectedRunnerRequestIds(collectionId, allEntries)
+  const allReqs = allEntries.filter(entry => selectedIds.has(entry.request.id)).map(entry => entry.request)
+  if (allReqs.length === 0) { showToast('Selecione ao menos um endpoint para executar.', 'error'); return }
   const dataRows = runnerData.length > 0 ? runnerData : [{}]
   const total = allReqs.length * dataRows.length
   runnerStop = false; runnerResults = []
@@ -689,21 +918,37 @@ async function runCollection(collectionId: number): Promise<void> {
       const req = allReqs[i]!
       const iterLabel = dataRows.length > 1 ? `[${rowIdx+1}/${dataRows.length}] ` : ''
       const tr = document.createElement('tr')
+      const responseCellEl = document.createElement('td')
+      responseCellEl.className = 'at-runner-response'
+      responseCellEl.textContent = '—'
       tr.innerHTML = `<td>${esc(iterLabel)}${i+1}</td><td title="${esc(req.name)}">${esc(req.name||'Sem nome')}</td><td><span class="at-method-badge at-method-${req.method.toLowerCase()}">${req.method}</span></td><td class="at-runner-url" title="${esc(req.url)}">${esc(req.url)}</td><td><span class="at-runner-spinner">⌛</span></td><td>—</td>`
+      tr.appendChild(responseCellEl)
       tbody.appendChild(tr); tr.scrollIntoView({ block: 'nearest' })
-      const cells = tr.querySelectorAll('td'); const statusCell = cells[4]!; const timeCell = cells[5]!
-      const result: RunnerResult = { iter: done + 1, name: req.name || 'Sem nome', method: req.method, url: req.url, status: null, duration: null, error: '' }
+      const cells = tr.querySelectorAll('td'); const statusCell = cells[4]!; const timeCell = cells[5]!; const responseCell = cells[6]!
+      const result: RunnerResult = { iter: done + 1, name: req.name || 'Sem nome', method: req.method, url: req.url, status: null, duration: null, error: '', response: '', responsePreview: '' }
       try {
         const r = await execProxy(req, vars)
+        const responseFull = normalizeRunnerResponse(r.body)
+        const responseSummary = summarizeRunnerResponse(r.body)
         statusCell.innerHTML = `<span class="at-status-badge ${statusClass(r.status)}">${r.status}</span>`
         timeCell.textContent = String(r.duration)
-        result.status = r.status; result.duration = r.duration
-        addConsoleEntry({ method: req.method, url: req.url, status: r.status, duration: r.duration }); passed++
+        responseCell.textContent = responseSummary
+        result.status = r.status; result.duration = r.duration; result.response = responseFull; result.responsePreview = responseSummary
+        addConsoleEntry({ method: req.method, url: req.url, status: r.status, duration: r.duration, responsePreview: responseSummary })
+        if (r.status >= 400) {
+          result.error = `HTTP ${r.status}`
+          failed++
+        } else {
+          passed++
+        }
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : 'Erro'
         statusCell.innerHTML = `<span class="at-status-badge at-status-5xx">${esc(msg.slice(0,30))}</span>`; timeCell.textContent = '—'
+        responseCell.textContent = msg
         result.error = msg
-        addConsoleEntry({ method: req.method, url: req.url, status: null, duration: null, error: msg }); failed++
+        result.response = msg
+        result.responsePreview = msg
+        addConsoleEntry({ method: req.method, url: req.url, status: null, duration: null, responsePreview: msg, error: msg }); failed++
       }
       runnerResults.push(result); done++; upd()
     }
@@ -765,7 +1010,7 @@ function parseOpenApiCollection(json: unknown, baseUrlOverride?: string): { name
       }
       const m = httpMethod.toUpperCase(); const desc = (op['description'] as string) || (op['summary'] as string) || ''
       const rawName = desc ? `${m} ${path} — ${desc}` : `${m} ${path}`
-      const req: ApiRequest = { id: crypto.randomUUID(), name: rawName.length > 100 ? rawName.slice(0,97)+'…' : rawName, method: m, url: baseUrl + path, params: queryParams, headers: headerParams, body }
+      const req: ApiRequest = { id: crypto.randomUUID(), name: rawName.length > 100 ? rawName.slice(0,97)+'…' : rawName, method: m, url: baseUrl + path, params: queryParams, headers: headerParams, body, auth: makeDefaultAuth() }
       const tags = op['tags'] as string[] | undefined; const tag = tags?.[0]
       if (tag) { if (!folderMap.has(tag)) folderMap.set(tag, []); folderMap.get(tag)!.push(req) } else { untagged.push(req) }
     }
@@ -774,6 +1019,34 @@ function parseOpenApiCollection(json: unknown, baseUrlOverride?: string): { name
   for (const [tag, reqs] of folderMap.entries()) items.push({ type: 'folder', id: crypto.randomUUID(), name: tag, requests: reqs })
   untagged.forEach(r => items.push(r))
   return items.length > 0 ? { name, requests: items } : null
+}
+
+function extractPostmanAuth(raw: unknown): ApiRequestAuth {
+  const auth = raw as Record<string, unknown> | undefined
+  if (!auth || typeof auth['type'] !== 'string') return makeDefaultAuth()
+  if (auth['type'] === 'bearer' && Array.isArray(auth['bearer'])) {
+    const token = (auth['bearer'] as Array<Record<string, unknown>>).find(entry => entry['key'] === 'token')?.['value']
+    return normalizeAuth({ type: 'bearer', bearerToken: String(token ?? '') })
+  }
+  if (auth['type'] === 'basic' && Array.isArray(auth['basic'])) {
+    const values = auth['basic'] as Array<Record<string, unknown>>
+    const username = values.find(entry => entry['key'] === 'username')?.['value']
+    const password = values.find(entry => entry['key'] === 'password')?.['value']
+    return normalizeAuth({ type: 'basic', basicUsername: String(username ?? ''), basicPassword: String(password ?? '') })
+  }
+  if (auth['type'] === 'apikey' && Array.isArray(auth['apikey'])) {
+    const values = auth['apikey'] as Array<Record<string, unknown>>
+    const key = values.find(entry => entry['key'] === 'key')?.['value']
+    const value = values.find(entry => entry['key'] === 'value')?.['value']
+    const addTo = values.find(entry => entry['key'] === 'in')?.['value']
+    return normalizeAuth({
+      type: 'api-key',
+      apiKeyKey: String(key ?? ''),
+      apiKeyValue: String(value ?? ''),
+      apiKeyAddTo: String(addTo ?? '').toLowerCase() === 'query' ? 'query' : 'header',
+    })
+  }
+  return makeDefaultAuth()
 }
 
 function parsePostmanCollection(json: unknown): { name: string; requests: CollectionItem[] } | null {
@@ -800,7 +1073,8 @@ function parsePostmanCollection(json: unknown): { name: string; requests: Collec
     if (urlField && typeof urlField === 'object') { const uObj = urlField as Record<string, unknown>; if (Array.isArray(uObj['query'])) { uObj['query'].forEach((q: unknown) => { const qq = q as Record<string, unknown>; if (qq['key']) params.push({ key: String(qq['key']), value: String(qq['value'] ?? ''), enabled: !qq['disabled'] }) }); if (params.length) url = url.split('?')[0] ?? url } }
     let body: ApiRequestBody = { type: 'none', content: '' }
     if (req['body'] && typeof req['body'] === 'object') { const b = req['body'] as Record<string, unknown>; const mode = b['mode'] as string; if (mode === 'raw') { const lang = ((b['options'] as Record<string, unknown> | undefined)?.['raw'] as Record<string, unknown> | undefined)?.['language']; body = { type: lang === 'json' ? 'json' : 'raw', content: String(b['raw'] ?? '') } } else if (mode === 'urlencoded' && Array.isArray(b['urlencoded'])) { body = { type: 'form', content: (b['urlencoded'] as Record<string, unknown>[]).filter(p => p['key']).map(p => `${p['key']}=${p['value'] ?? ''}`).join('&') } } }
-    return { id: crypto.randomUUID(), name: (item['name'] as string) || url, method, url, params, headers, body }
+    const auth = extractPostmanAuth(req['auth'] ?? col['auth'])
+    return { id: crypto.randomUUID(), name: (item['name'] as string) || url, method, url, params, headers, body, auth }
   }
   const items: CollectionItem[] = [];
   (col['item'] as unknown[]).forEach(item => { const r = parseItem(item as Record<string, unknown>); if (r) items.push(r) })
@@ -845,7 +1119,7 @@ async function importFromUrl(rawUrl: string): Promise<void> {
   const btn = el<HTMLButtonElement>('atImportUrlSubmit')
   btn.disabled = true; btn.textContent = '...'
   try {
-    const res = await fetch('/api/api-tester/proxy', {
+    const res = await fetch('/api/post_apis/proxy', {
       method: 'POST', credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ method: 'GET', url })
@@ -880,7 +1154,7 @@ async function importFromJsonString(jsonStr: string): Promise<void> {
   const result = parseOpenApiCollection(parsed, baseUrlOverride) ?? parseNativeCollection(parsed) ?? parsePostmanCollection(parsed)
   if (!result) { showToast('Formato não reconhecido. Aceito: OpenAPI 3.x, Postman v2/v2.1 ou nativo.', 'error'); return }
   try {
-    const res = await fetch('/api/api-tester/collections', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: result.name, requests: result.requests }) })
+    const res = await fetch('/api/post_apis/collections', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: result.name, requests: result.requests }) })
     const json = (await res.json()) as { success: boolean; data?: ApiCollection }
     if (json.success && json.data) {
       openCollections.add(json.data.id); collections = [json.data, ...collections]; renderCollections()
@@ -889,7 +1163,7 @@ async function importFromJsonString(jsonStr: string): Promise<void> {
 }
 
 // ---- Initializer ----
-export function initApiTesterTool(): void {
+export function initPostApisTool(): void {
   document.querySelectorAll<HTMLButtonElement>('.at-tab').forEach(btn => btn.addEventListener('click', () => setTab(btn.dataset['tab'] as ActiveTab)))
   document.querySelectorAll<HTMLButtonElement>('.at-resp-tab').forEach(btn => btn.addEventListener('click', () => setRespTab(btn.dataset['tab'] as RespTab)))
   el<HTMLButtonElement>('atSendBtn').addEventListener('click', () => { void sendRequest() })
@@ -898,12 +1172,14 @@ export function initApiTesterTool(): void {
     currentRequest = makeNewRequest(); currentCollectionId = null
     el<HTMLInputElement>('atReqName').value = currentRequest.name; el<HTMLSelectElement>('atMethod').value = 'GET'; el<HTMLInputElement>('atUrl').value = ''
     el<HTMLTableSectionElement>('atParamsTbody').innerHTML = ''; el<HTMLTableSectionElement>('atHeadersTbody').innerHTML = ''
+    loadAuth(currentRequest.auth)
     const none = document.querySelector<HTMLInputElement>('input[name="atBodyType"][value="none"]'); if (none) none.checked = true
     el<HTMLTextAreaElement>('atBodyContent').value = ''; updateBodyVisibility(); clearResponse(); renderCollections()
   })
   el<HTMLButtonElement>('atAddParam').addEventListener('click', () => addKvRow(el<HTMLTableSectionElement>('atParamsTbody')))
   el<HTMLButtonElement>('atAddHeader').addEventListener('click', () => addKvRow(el<HTMLTableSectionElement>('atHeadersTbody')))
-  document.querySelectorAll<HTMLInputElement>('input[name="atBodyType"]').forEach(r => r.addEventListener('change', updateBodyVisibility)); updateBodyVisibility()
+  el<HTMLSelectElement>('atAuthType').addEventListener('change', updateAuthVisibility)
+  document.querySelectorAll<HTMLInputElement>('input[name="atBodyType"]').forEach(r => r.addEventListener('change', updateBodyVisibility)); updateBodyVisibility(); loadAuth(currentRequest.auth)
   el<HTMLButtonElement>('atRespCopyBtn').addEventListener('click', () => {
     const text = el<HTMLPreElement>('atRespBodyPre').textContent ?? ''
     void navigator.clipboard.writeText(text).then(() => { const btn = el<HTMLButtonElement>('atRespCopyBtn'); btn.textContent = 'Copiado!'; setTimeout(() => { btn.textContent = 'Copiar' }, 1500) })
@@ -925,6 +1201,22 @@ export function initApiTesterTool(): void {
   el<HTMLButtonElement>('atRunnerClose').addEventListener('click', () => { el('atRunner').hidden = true })
   el<HTMLButtonElement>('atRunnerStart').addEventListener('click', () => { const id = Number(el<HTMLSelectElement>('atRunnerCollSelect').value); if (!id) { showToast('Selecione uma coleção', 'error'); return }; el<HTMLTableSectionElement>('atRunnerTbody').innerHTML = ''; void runCollection(id) })
   el<HTMLButtonElement>('atRunnerStop').addEventListener('click', () => { runnerStop = true })
+  el<HTMLButtonElement>('atRunnerSelectAll').addEventListener('click', () => {
+    const colId = Number(el<HTMLSelectElement>('atRunnerCollSelect').value)
+    const col = collections.find(c => c.id === colId)
+    if (!col) return
+    runnerSelectedRequests.set(colId, new Set(getRunnerEntries(col.requests).map(entry => entry.request.id)))
+    renderRunnerRequestPicker()
+    renderRunnerPreview()
+  })
+  el<HTMLButtonElement>('atRunnerClearAll').addEventListener('click', () => {
+    const colId = Number(el<HTMLSelectElement>('atRunnerCollSelect').value)
+    const col = collections.find(c => c.id === colId)
+    if (!col) return
+    runnerSelectedRequests.set(colId, new Set())
+    renderRunnerRequestPicker()
+    renderRunnerPreview()
+  })
   const runnerFileInput = el<HTMLInputElement>('atRunnerFileInput')
   el<HTMLButtonElement>('atRunnerFileBtn').addEventListener('click', () => runnerFileInput.click())
   runnerFileInput.addEventListener('change', () => {
@@ -941,7 +1233,10 @@ export function initApiTesterTool(): void {
     runnerFileInput.value = ''
   })
   el<HTMLButtonElement>('atRunnerFileClear').addEventListener('click', () => { runnerData = []; el('atRunnerFileInfo').textContent = '—'; el('atRunnerPreview').hidden = true })
-  el<HTMLSelectElement>('atRunnerCollSelect').addEventListener('change', renderRunnerPreview)
+  el<HTMLSelectElement>('atRunnerCollSelect').addEventListener('change', () => {
+    renderRunnerRequestPicker()
+    renderRunnerPreview()
+  })
   const importInput = el<HTMLInputElement>('atImportInput')
   el<HTMLButtonElement>('atImportBtn').addEventListener('click', () => importInput.click())
   importInput.addEventListener('change', () => { const file = importInput.files?.[0]; if (file) { const r = new FileReader(); r.onload = e => { void importFromJsonString(e.target?.result as string) }; r.readAsText(file); importInput.value = '' } })

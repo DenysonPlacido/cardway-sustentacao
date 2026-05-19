@@ -496,6 +496,7 @@ body {
 .tool-card {
   text-align: left;
   border: 1px solid var(--line-strong);
+  color: var(--text);
   cursor: pointer;
   transition: transform 0.14s ease, border-color 0.14s ease, background 0.14s ease;
 }
@@ -526,6 +527,7 @@ body {
 .tool-card h3 {
   font-size: 16px;
   margin-bottom: 8px;
+  color: var(--text);
 }
 
 .tool-card p {
@@ -1710,7 +1712,7 @@ textarea:focus,
    API Tester
    ============================== */
 
-#section-api-tester {
+#section-post_apis {
   height: calc(100vh - var(--header-height) - var(--footer-height) - 56px);
   overflow: hidden;
   display: flex;
@@ -1999,6 +2001,21 @@ textarea:focus,
 
 .at-tab-panel.hidden { display: none !important; }
 
+.at-tab-note {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 2px;
+  color: var(--text-soft);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.at-tab-note strong {
+  color: var(--text);
+  font-size: 14px;
+}
+
 .at-kv-wrap { overflow-x: auto; }
 
 .at-kv-table {
@@ -2098,6 +2115,66 @@ textarea:focus,
 }
 
 .at-body-textarea:focus { border-color: var(--accent); }
+
+.at-auth-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.at-auth-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 12px;
+}
+
+.at-auth-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.at-auth-label {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--text-faint);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.at-auth-select {
+  max-width: 280px;
+}
+
+.at-auth-input {
+  width: 100%;
+  background: var(--bg-soft);
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 12px;
+  padding: 9px 11px;
+  outline: none;
+  transition: border-color 0.12s;
+}
+
+.at-auth-input:focus {
+  border-color: var(--accent);
+}
+
+.at-auth-help {
+  color: var(--text-faint);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.at-auth-help code {
+  color: var(--accent-soft);
+  font-family: var(--mono);
+}
 
 .at-response {
   flex: 1;
@@ -2332,6 +2409,78 @@ textarea:focus,
   border-bottom: 1px solid var(--line);
 }
 
+.at-runner-requests {
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.at-runner-requests-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.at-runner-requests-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.at-runner-request-list {
+  max-height: 220px;
+  overflow-y: auto;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: rgba(6, 12, 20, 0.4);
+}
+
+.at-runner-request-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--line);
+}
+
+.at-runner-request-item:last-child {
+  border-bottom: 0;
+}
+
+.at-runner-request-item:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.at-runner-request-item input[type="checkbox"] {
+  margin-top: 3px;
+  accent-color: var(--accent);
+}
+
+.at-runner-request-copy {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.at-runner-request-name {
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.at-runner-request-meta {
+  color: var(--text-faint);
+  font-size: 11px;
+  font-family: var(--mono);
+  line-height: 1.5;
+  word-break: break-all;
+}
+
 .at-select {
   flex: 1;
   background: var(--bg-soft);
@@ -2394,6 +2543,16 @@ textarea:focus,
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.at-runner-response {
+  max-width: 340px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-soft);
+  line-height: 1.5;
 }
 
 .at-runner-spinner { color: var(--text-faint); font-size: 14px; }
@@ -2653,6 +2812,16 @@ textarea:focus,
   color: var(--text-soft);
   font-family: var(--mono);
   font-size: 11px;
+}
+
+.at-con-response {
+  max-width: 360px;
+  color: var(--text-soft);
+  font-family: var(--mono);
+  font-size: 11px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 /* Folder head hover shows actions (mirrors collection-head rule) */
