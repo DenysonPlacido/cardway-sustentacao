@@ -957,6 +957,7 @@ async function runCollection(collectionId: number): Promise<void> {
     for (let i = 0; i < allReqs.length; i++) {
       if (runnerStop) break
       const req = allReqs[i]!
+      const runtimeVars = applyRequestScript(req, vars)
       const iterLabel = dataRows.length > 1 ? `[${rowIdx+1}/${dataRows.length}] ` : ''
       const tr = document.createElement('tr')
       const responseCellEl = document.createElement('td')
@@ -968,7 +969,7 @@ async function runCollection(collectionId: number): Promise<void> {
       const cells = tr.querySelectorAll('td'); const statusCell = cells[4]!; const timeCell = cells[5]!; const responseCell = cells[6]!
       const result: RunnerResult = { iter: done + 1, name: req.name || 'Sem nome', method: req.method, url: req.url, status: null, duration: null, error: '', response: '', responsePreview: '' }
       try {
-        const r = await execProxy(req, vars)
+        const r = await execProxy(req, runtimeVars)
         const responseFull = normalizeRunnerResponse(r.body)
         const responseSummary = summarizeRunnerResponse(r.body)
         statusCell.innerHTML = `<span class="at-status-badge ${statusClass(r.status)}">${r.status}</span>`
